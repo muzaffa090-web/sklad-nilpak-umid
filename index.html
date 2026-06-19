@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
@@ -748,6 +748,11 @@
       width: min(380px, 100%);
     }
 
+    .select-cell {
+      text-align: center;
+      vertical-align: middle;
+    }
+
     .row-actions {
       display: flex;
       flex-wrap: wrap;
@@ -1120,10 +1125,11 @@
               <table id="incomingTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
+                    <th>Holat</th>
                     <th>Summa</th>
+                    <th>Izoh</th>
                     <th>Amallar</th>
                   </tr>
                 </thead>
@@ -1436,11 +1442,12 @@
               <table id="driverOutTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
+                    <th>Holat</th>
                     <th>Haydovchi</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
                     <th>Summa</th>
+                    <th>Izoh</th>
                     <th>Amallar</th>
                   </tr>
                 </thead>
@@ -1514,11 +1521,12 @@
               <table id="returnsTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
+                    <th>Holat</th>
                     <th>Haydovchi</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
                     <th>Summa</th>
+                    <th>Izoh</th>
                     <th>Amallar</th>
                   </tr>
                 </thead>
@@ -1587,10 +1595,10 @@
               <table id="otherOutTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
+                    <th>Holat</th>
                     <th>Sabab</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
                     <th>Summa</th>
                     <th>Amallar</th>
                   </tr>
@@ -1622,11 +1630,10 @@
               <table id="dailyFlowTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
                     <th>Holat</th>
-                    <th>Haydovchi</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
+                    <th>Haydovchi/Sabab</th>
                     <th>Summa</th>
                     <th>Manba</th>
                     <th>Amallar</th>
@@ -2528,6 +2535,42 @@
       return `<div class="row-actions">${movementEditButton(id)}${movementDeleteButton(id)}</div>`;
     }
 
+    function movementGroupKey(m) {
+      return m.batchId || [m.type, m.date, m.driverId || "", m.note || ""].join("|");
+    }
+
+    function groupedMovements(rows) {
+      const groups = new Map();
+      rows.forEach((m) => {
+        const key = movementGroupKey(m);
+        if (!groups.has(key)) {
+          groups.set(key, {
+            key,
+            date: m.date,
+            type: m.type,
+            driverId: m.driverId || "",
+            note: m.note || "",
+            items: [],
+            amount: 0
+          });
+        }
+        const group = groups.get(key);
+        group.items.push(m);
+        group.amount += Number(m.amount || 0);
+        if ((m.date || "") > (group.date || "")) group.date = m.date;
+      });
+      return [...groups.values()].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    }
+
+    function groupActionButtons(group) {
+      const ids = group.items.map((m) => m.id).join(",");
+      return `<div class="row-actions"><button class="btn btn-danger btn-sm movement-group-delete-btn" data-movement-delete-ids="${ids}" type="button">O'chirish</button></div>`;
+    }
+
+    function selectCell(id) {
+      return `<td class="select-cell"><input class="export-row-check" data-export-row="${id}" type="checkbox" aria-label="Excel uchun tanlash"></td>`;
+    }
+
     function normalizeSearch(value) {
       return String(value || "").trim().toLocaleLowerCase("uz-UZ");
     }
@@ -2825,7 +2868,7 @@
       requestStateSave();
     }
 
-    function addMovement({ date, type, productId, unit, qty, amount, driverId = null, note = "" }) {
+    function addMovement({ date, type, productId, unit, qty, amount, driverId = null, note = "", batchId = "" }) {
       const product = getProduct(productId);
       if (!product) return false;
       state.movements.push({
@@ -2838,7 +2881,8 @@
         pieces: toPieces(product, qty, unit),
         amount: Number(amount || 0),
         driverId,
-        note
+        note,
+        batchId
       });
       requestStateSave();
       return true;
@@ -2866,6 +2910,7 @@
       driverSelectIds.forEach((id) => {
         const select = document.getElementById(id);
         if (!select) return;
+        const selectedValue = select.value;
         select.innerHTML = "";
         if (!state.drivers.length) {
           select.innerHTML = "<option value=''>Haydovchi yo'q</option>";
@@ -2875,6 +2920,7 @@
           const op = document.createElement("option");
           op.value = d.id;
           op.textContent = d.name;
+          if (d.id === selectedValue) op.selected = true;
           select.appendChild(op);
         });
       });
@@ -2960,6 +3006,7 @@
         }
       }
 
+      const batchId = uid("batch");
       rows.forEach((r) => {
         const p = getProduct(r.productId);
         if (!p) return;
@@ -2975,7 +3022,8 @@
             qty: r.bagQty,
             amount: amounts.bagAmount,
             driverId,
-            note
+            note,
+            batchId
           });
         }
         if (r.pieceQty > 0) {
@@ -2987,7 +3035,8 @@
             qty: r.pieceQty,
             amount: amounts.pieceAmount,
             driverId,
-            note
+            note,
+            batchId
           });
         }
       });
@@ -3167,25 +3216,24 @@
     }
 
     function renderIncoming() {
-      const rows = state.movements
+      const rows = groupedMovements(state.movements
         .filter((m) => m.type === "incoming")
-        .filter(movementInGlobalFilter)
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+        .filter(movementInGlobalFilter));
       if (!rows.length) {
-        tableEmpty(el.incomingBody, 5, "Skladga kirimlar yo'q.");
+        tableEmpty(el.incomingBody, 6, "Skladga kirimlar yo'q.");
         renderPager("incomingTable", "incoming", 0);
       } else {
         const { pageRows } = slicePage(rows, "incoming");
         el.incomingBody.innerHTML = "";
-        pageRows.forEach((m) => {
-          const p = getProduct(m.productId);
+        pageRows.forEach((g) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${safeDate(m.date)}</td>
-            <td>${p ? p.name : "-"}</td>
-            <td>${movementQtyText(m)}</td>
-            <td>${fmtMoney(m.amount)}</td>
-            <td>${movementActionButtons(m.id)}</td>
+            ${selectCell(g.key)}
+            <td>${safeDate(g.date)}</td>
+            <td>${movementLabel(g.type)}</td>
+            <td>${fmtMoney(g.amount)}</td>
+            <td>${escapeHtml(g.note || "-")}</td>
+            <td>${groupActionButtons(g)}</td>
           `;
           el.incomingBody.appendChild(tr);
         });
@@ -3412,27 +3460,24 @@
     }
 
     function renderDriverOut() {
-      const rows = state.movements
-        .filter((m) => m.type === "driver_out")
-        .filter(movementInGlobalFilter)
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+      const rows = groupedMovements(state.movements.filter((m) => m.type === "driver_out").filter(movementInGlobalFilter));
       if (!rows.length) {
-        tableEmpty(el.driverOutBody, 6, "Haydovchilar olgan tovarlar yo'q.");
+        tableEmpty(el.driverOutBody, 7, "Haydovchilar olgan tovarlar yo'q.");
         renderPager("driverOutTable", "driverOut", 0);
       } else {
         const { pageRows } = slicePage(rows, "driverOut");
         el.driverOutBody.innerHTML = "";
-        pageRows.forEach((m) => {
-          const p = getProduct(m.productId);
-          const d = getDriver(m.driverId);
+        pageRows.forEach((g) => {
+          const d = getDriver(g.driverId);
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${safeDate(m.date)}</td>
-            <td>${d ? d.name : "-"}</td>
-            <td>${p ? p.name : "-"}</td>
-            <td>${movementQtyText(m)}</td>
-            <td>${fmtMoney(m.amount)}</td>
-            <td>${movementActionButtons(m.id)}</td>
+            ${selectCell(g.key)}
+            <td>${safeDate(g.date)}</td>
+            <td>${movementLabel(g.type)}</td>
+            <td>${d ? escapeHtml(d.name) : "-"}</td>
+            <td>${fmtMoney(g.amount)}</td>
+            <td>${escapeHtml(g.note || "-")}</td>
+            <td>${groupActionButtons(g)}</td>
           `;
           el.driverOutBody.appendChild(tr);
         });
@@ -3442,27 +3487,24 @@
     }
 
     function renderReturns() {
-      const rows = state.movements
-        .filter((m) => m.type === "driver_return")
-        .filter(movementInGlobalFilter)
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+      const rows = groupedMovements(state.movements.filter((m) => m.type === "driver_return").filter(movementInGlobalFilter));
       if (!rows.length) {
-        tableEmpty(el.returnsBody, 6, "Vozvratlar yo'q.");
+        tableEmpty(el.returnsBody, 7, "Vozvratlar yo'q.");
         renderPager("returnsTable", "returns", 0);
       } else {
         const { pageRows } = slicePage(rows, "returns");
         el.returnsBody.innerHTML = "";
-        pageRows.forEach((m) => {
-          const p = getProduct(m.productId);
-          const d = getDriver(m.driverId);
+        pageRows.forEach((g) => {
+          const d = getDriver(g.driverId);
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${safeDate(m.date)}</td>
-            <td>${d ? d.name : "-"}</td>
-            <td>${p ? p.name : "-"}</td>
-            <td>${movementQtyText(m)}</td>
-            <td>${fmtMoney(m.amount)}</td>
-            <td>${movementActionButtons(m.id)}</td>
+            ${selectCell(g.key)}
+            <td>${safeDate(g.date)}</td>
+            <td>${movementLabel(g.type)}</td>
+            <td>${d ? escapeHtml(d.name) : "-"}</td>
+            <td>${fmtMoney(g.amount)}</td>
+            <td>${escapeHtml(g.note || "-")}</td>
+            <td>${groupActionButtons(g)}</td>
           `;
           el.returnsBody.appendChild(tr);
         });
@@ -3472,26 +3514,22 @@
     }
 
     function renderOtherOut() {
-      const rows = state.movements
-        .filter((m) => m.type === "other_out")
-        .filter(movementInGlobalFilter)
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+      const rows = groupedMovements(state.movements.filter((m) => m.type === "other_out").filter(movementInGlobalFilter));
       if (!rows.length) {
         tableEmpty(el.otherOutBody, 6, "Boshqa chiqimlar yo'q.");
         renderPager("otherOutTable", "otherOut", 0);
       } else {
         const { pageRows } = slicePage(rows, "otherOut");
         el.otherOutBody.innerHTML = "";
-        pageRows.forEach((m) => {
-          const p = getProduct(m.productId);
+        pageRows.forEach((g) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${safeDate(m.date)}</td>
-            <td>${m.note || "-"}</td>
-            <td>${p ? p.name : "-"}</td>
-            <td>${movementQtyText(m)}</td>
-            <td>${fmtMoney(m.amount)}</td>
-            <td>${movementActionButtons(m.id)}</td>
+            ${selectCell(g.key)}
+            <td>${safeDate(g.date)}</td>
+            <td>${movementLabel(g.type)}</td>
+            <td>${escapeHtml(g.note || "-")}</td>
+            <td>${fmtMoney(g.amount)}</td>
+            <td>${groupActionButtons(g)}</td>
           `;
           el.otherOutBody.appendChild(tr);
         });
@@ -3585,40 +3623,37 @@
     }
 
     function renderDailyFlow() {
-      const rows = state.movements
+      const rows = groupedMovements(state.movements
         .filter((m) => m.type === "driver_out" || m.type === "other_out" || m.type === "driver_return")
         .filter(movementInGlobalFilter)
         .filter((m) => {
           if (state.flowType === "all") return true;
           if (state.flowType === "out") return m.type === "driver_out" || m.type === "other_out";
           return m.type === "driver_return";
-        })
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+        }));
 
       el.flowRangeText.textContent = `${filterLabel().replace("Filtr:", "Oraliq:")} | Filtr turi: ${
         state.flowType === "all" ? "Barchasi" : state.flowType === "out" ? "Faqat Chiqim" : "Faqat Kirim"
       }`;
 
       if (!rows.length) {
-        tableEmpty(el.dailyFlowBody, 8, "Tanlangan oraliqda harakatlar topilmadi.");
+        tableEmpty(el.dailyFlowBody, 7, "Tanlangan oraliqda harakatlar topilmadi.");
         renderPager("dailyFlowTable", "dailyFlow", 0);
         return;
       }
       const { pageRows } = slicePage(rows, "dailyFlow");
       el.dailyFlowBody.innerHTML = "";
-      pageRows.forEach((m) => {
-        const p = getProduct(m.productId);
-        const d = getDriver(m.driverId);
+      pageRows.forEach((g) => {
+        const d = getDriver(g.driverId);
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${safeDate(m.date)}</td>
-          <td>${movementLabel(m.type)}</td>
-          <td>${d ? d.name : m.type === "other_out" ? m.note || "-" : "-"}</td>
-          <td>${p ? p.name : "-"}</td>
-          <td>${movementQtyText(m)}</td>
-          <td>${fmtMoney(m.amount)}</td>
-          <td>${movementSource(m.type)}</td>
-          <td>${movementActionButtons(m.id)}</td>
+          ${selectCell(g.key)}
+          <td>${safeDate(g.date)}</td>
+          <td>${movementLabel(g.type)}</td>
+          <td>${d ? escapeHtml(d.name) : escapeHtml(g.note || "-")}</td>
+          <td>${fmtMoney(g.amount)}</td>
+          <td>${movementSource(g.type)}</td>
+          <td>${groupActionButtons(g)}</td>
         `;
         el.dailyFlowBody.appendChild(tr);
       });
@@ -3729,10 +3764,25 @@
     function exportTableToExcel(tableId, filename) {
       const table = document.getElementById(tableId);
       if (!table) return;
+      const selected = [...table.querySelectorAll("tbody .export-row-check:checked")].map((check) => check.closest("tr")).filter(Boolean);
+      const exportTable = table.cloneNode(true);
+      if (selected.length) {
+        const selectedKeys = new Set(selected.map((row) => row.querySelector(".export-row-check")?.dataset.exportRow));
+        exportTable.querySelectorAll("tbody tr").forEach((row) => {
+          const key = row.querySelector(".export-row-check")?.dataset.exportRow;
+          if (!selectedKeys.has(key)) row.remove();
+        });
+      }
+      if (exportTable.querySelector(".export-row-check")) {
+        exportTable.querySelectorAll("tr").forEach((row) => {
+          row.querySelector("th:last-child, td:last-child")?.remove();
+          row.querySelector("th:first-child, td:first-child")?.remove();
+        });
+      }
       const html = `
         <html>
           <head><meta charset="UTF-8"></head>
-          <body>${table.outerHTML}</body>
+          <body>${exportTable.outerHTML}</body>
         </html>
       `;
       const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
@@ -4019,6 +4069,16 @@
         const movementEditBtn = e.target.closest(".movement-edit-btn");
         if (movementEditBtn) {
           openMovementEditModal(movementEditBtn.dataset.movementEditId);
+          return;
+        }
+        const movementGroupDeleteBtn = e.target.closest(".movement-group-delete-btn");
+        if (movementGroupDeleteBtn) {
+          const ids = String(movementGroupDeleteBtn.dataset.movementDeleteIds || "").split(",").filter(Boolean);
+          if (!ids.length) return;
+          if (!confirm("Ushbu qatordagi barcha yozuvlar o'chirilsinmi? Sklad qoldig'i avtomatik qayta hisoblanadi.")) return;
+          state.movements = state.movements.filter((m) => !ids.includes(m.id));
+          requestStateSave();
+          renderAll();
           return;
         }
         const movementDeleteBtn = e.target.closest(".movement-delete-btn");
