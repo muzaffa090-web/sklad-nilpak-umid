@@ -1819,6 +1819,19 @@
             <input id="movementEditNote" placeholder="Ixtiyoriy">
           </div>
         </div>
+        <div id="movementEditGroupWrap" class="table-wrap hidden" style="margin-top:10px;">
+          <table id="movementEditGroupTable">
+            <thead>
+              <tr>
+                <th>Mahsulot</th>
+                <th>Birlik</th>
+                <th>Miqdor</th>
+                <th>Summa</th>
+              </tr>
+            </thead>
+            <tbody id="movementEditGroupBody"></tbody>
+          </table>
+        </div>
         <div class="actions">
           <button class="btn btn-primary" type="submit">Saqlash</button>
           <button id="movementEditCancelBtn" class="btn btn-soft" type="button">Bekor qilish</button>
@@ -1868,7 +1881,7 @@
   </div>
 
   <script>
-    const PAGE_SIZE = 20;
+    const PAGE_SIZE = 30;
     const INITIAL_PRODUCTS = [
       { name: "РЎР°Р»С„РµС‚РєРё NILPAK 2-С… СЃР»РѕР№РЅС‹Рµ 30x32 Р¶С‘Р»С‚С‹Р№ 30С€С‚/30", pieces: 30, price: 7500 },
       { name: "РЎР°Р»С„РµС‚РєРё NILPAK 2-С… СЃР»РѕР№РЅС‹Рµ 30x32 Р·РµР»С‘РЅС‹Р№ 30С€С‚/30", pieces: 30, price: 7500 },
@@ -2121,6 +2134,8 @@
       movementEditUnit: document.getElementById("movementEditUnit"),
       movementEditQty: document.getElementById("movementEditQty"),
       movementEditAmount: document.getElementById("movementEditAmount"),
+      movementEditGroupWrap: document.getElementById("movementEditGroupWrap"),
+      movementEditGroupBody: document.getElementById("movementEditGroupBody"),
       movementEditDriverWrap: document.getElementById("movementEditDriverWrap"),
       movementEditDriver: document.getElementById("movementEditDriver"),
       movementEditNote: document.getElementById("movementEditNote"),
@@ -2562,9 +2577,20 @@
       return [...groups.values()].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
     }
 
+    function groupIds(group) {
+      return group.items.map((m) => m.id).join(",");
+    }
+
+    function movementGroupDetails(group) {
+      return group.items.map((m) => {
+        const p = getProduct(m.productId);
+        return `${p ? p.name : "-"}: ${movementQtyText(m)} - ${fmtMoney(m.amount)}`;
+      }).join("; ");
+    }
+
     function groupActionButtons(group) {
-      const ids = group.items.map((m) => m.id).join(",");
-      return `<div class="row-actions"><button class="btn btn-danger btn-sm movement-group-delete-btn" data-movement-delete-ids="${ids}" type="button">O'chirish</button></div>`;
+      const ids = groupIds(group);
+      return `<div class="row-actions"><button class="btn btn-soft btn-sm movement-group-edit-btn" data-movement-edit-ids="${ids}" type="button">Tahrir</button><button class="btn btn-danger btn-sm movement-group-delete-btn" data-movement-delete-ids="${ids}" type="button">O'chirish</button></div>`;
     }
 
     function selectCell(id) {
@@ -2653,12 +2679,22 @@
 
     function closeMovementEditModal() {
       el.movementEditModal.classList.add("hidden");
+      el.movementEditForm.dataset.mode = "single";
+      delete el.movementEditForm.dataset.groupIds;
       clearNotice(el.movementEditNotice);
     }
 
     function openMovementEditModal(movementId) {
       const movement = state.movements.find((m) => m.id === movementId);
       if (!movement) return;
+      el.movementEditForm.dataset.mode = "single";
+      delete el.movementEditForm.dataset.groupIds;
+      [el.movementEditProduct, el.movementEditUnit, el.movementEditQty, el.movementEditAmount].forEach((node) => {
+        node.disabled = false;
+        node?.closest(".field")?.classList.remove("hidden");
+      });
+      el.movementEditGroupWrap.classList.add("hidden");
+      el.movementEditGroupBody.innerHTML = "";
       el.movementEditId.value = movement.id;
       el.movementEditType.value = movementTypeName(movement.type);
       el.movementEditDate.value = movement.date || todayIso();
@@ -2669,6 +2705,42 @@
       el.movementEditAmount.value = Number(movement.amount || 0);
       el.movementEditNote.value = movement.note || "";
       el.movementEditDriverWrap.classList.toggle("hidden", !movementNeedsDriver(movement.type));
+      clearNotice(el.movementEditNotice);
+      el.movementEditModal.classList.remove("hidden");
+    }
+
+    function openMovementGroupEditModal(idsText) {
+      const ids = String(idsText || "").split(",").filter(Boolean);
+      const items = ids.map((id) => state.movements.find((m) => m.id === id)).filter(Boolean);
+      if (!items.length) return;
+      const first = items[0];
+      el.movementEditForm.dataset.mode = "group";
+      el.movementEditForm.dataset.groupIds = ids.join(",");
+      el.movementEditId.value = first.id;
+      el.movementEditType.value = movementTypeName(first.type);
+      el.movementEditDate.value = first.date || todayIso();
+      fillDriverSelect(el.movementEditDriver, first.driverId || "");
+      el.movementEditNote.value = first.note || "";
+      el.movementEditDriverWrap.classList.toggle("hidden", !movementNeedsDriver(first.type));
+      [el.movementEditProduct, el.movementEditUnit, el.movementEditQty, el.movementEditAmount].forEach((node) => {
+        node.disabled = true;
+        node?.closest(".field")?.classList.add("hidden");
+      });
+      el.movementEditGroupWrap.classList.remove("hidden");
+      el.movementEditGroupBody.innerHTML = "";
+      items.forEach((m) => {
+        const tr = document.createElement("tr");
+        tr.dataset.groupMovementId = m.id;
+        tr.innerHTML = `
+          <td><select class="entry-input" data-group-field="product"></select></td>
+          <td><select class="entry-input" data-group-field="unit"><option value="bag">Qop</option><option value="piece">Dona</option></select></td>
+          <td><input class="entry-input" data-group-field="qty" type="number" min="1" step="1" value="${m.qty}"></td>
+          <td><input class="entry-input" data-group-field="amount" type="number" min="0" step="1" value="${Number(m.amount || 0)}"></td>
+        `;
+        el.movementEditGroupBody.appendChild(tr);
+        fillProductSelect(tr.querySelector('[data-group-field="product"]'), m.productId);
+        tr.querySelector('[data-group-field="unit"]').value = m.unit === "bag" ? "bag" : "piece";
+      });
       clearNotice(el.movementEditNotice);
       el.movementEditModal.classList.remove("hidden");
     }
@@ -2776,7 +2848,7 @@
       const p = pageInfo(key, totalItems);
       pager.innerHTML = `
         <button class="pager-btn" data-pager-key="${key}" data-pager-move="-1" ${p.page <= 1 ? "disabled" : ""}>Oldingi</button>
-        <span class="pager-info">${p.page} / ${p.pages} (har betda 20 qator)</span>
+        <span class="pager-info">${p.page} / ${p.pages} (har betda 30 qator)</span>
         <button class="pager-btn" data-pager-key="${key}" data-pager-move="1" ${p.page >= p.pages ? "disabled" : ""}>Keyingi</button>
       `;
     }
@@ -3227,6 +3299,9 @@
         el.incomingBody.innerHTML = "";
         pageRows.forEach((g) => {
           const tr = document.createElement("tr");
+          tr.className = "movement-group-row";
+          tr.dataset.movementEditIds = groupIds(g);
+          tr.dataset.exportDetails = movementGroupDetails(g);
           tr.innerHTML = `
             ${selectCell(g.key)}
             <td>${safeDate(g.date)}</td>
@@ -3470,6 +3545,9 @@
         pageRows.forEach((g) => {
           const d = getDriver(g.driverId);
           const tr = document.createElement("tr");
+          tr.className = "movement-group-row";
+          tr.dataset.movementEditIds = groupIds(g);
+          tr.dataset.exportDetails = movementGroupDetails(g);
           tr.innerHTML = `
             ${selectCell(g.key)}
             <td>${safeDate(g.date)}</td>
@@ -3497,6 +3575,9 @@
         pageRows.forEach((g) => {
           const d = getDriver(g.driverId);
           const tr = document.createElement("tr");
+          tr.className = "movement-group-row";
+          tr.dataset.movementEditIds = groupIds(g);
+          tr.dataset.exportDetails = movementGroupDetails(g);
           tr.innerHTML = `
             ${selectCell(g.key)}
             <td>${safeDate(g.date)}</td>
@@ -3523,6 +3604,9 @@
         el.otherOutBody.innerHTML = "";
         pageRows.forEach((g) => {
           const tr = document.createElement("tr");
+          tr.className = "movement-group-row";
+          tr.dataset.movementEditIds = groupIds(g);
+          tr.dataset.exportDetails = movementGroupDetails(g);
           tr.innerHTML = `
             ${selectCell(g.key)}
             <td>${safeDate(g.date)}</td>
@@ -3646,6 +3730,9 @@
       pageRows.forEach((g) => {
         const d = getDriver(g.driverId);
         const tr = document.createElement("tr");
+        tr.className = "movement-group-row";
+        tr.dataset.movementEditIds = groupIds(g);
+        tr.dataset.exportDetails = movementGroupDetails(g);
         tr.innerHTML = `
           ${selectCell(g.key)}
           <td>${safeDate(g.date)}</td>
@@ -3773,16 +3860,49 @@
           if (!selectedKeys.has(key)) row.remove();
         });
       }
-      if (exportTable.querySelector(".export-row-check")) {
-        exportTable.querySelectorAll("tr").forEach((row) => {
-          row.querySelector("th:last-child, td:last-child")?.remove();
-          row.querySelector("th:first-child, td:first-child")?.remove();
+      const hasSelectableRows = Boolean(exportTable.querySelector(".export-row-check"));
+      if (hasSelectableRows) {
+        exportTable.querySelectorAll("thead tr").forEach((row) => {
+          row.querySelector("th:last-child")?.remove();
+          row.querySelector("th:first-child")?.remove();
+          const detailsHead = document.createElement("th");
+          detailsHead.textContent = "Tovarlar soni";
+          const amountHead = [...row.children].find((cell) => cell.textContent.trim() === "Summa");
+          row.insertBefore(detailsHead, amountHead || null);
+        });
+        exportTable.querySelectorAll("tbody tr").forEach((row) => {
+          const sourceRow = table.querySelector(`[data-movement-edit-ids="${row.dataset.movementEditIds || ""}"]`);
+          const details = sourceRow?.dataset.exportDetails || row.dataset.exportDetails || "";
+          row.querySelector("td:last-child")?.remove();
+          row.querySelector("td:first-child")?.remove();
+          const detailsCell = document.createElement("td");
+          detailsCell.textContent = details;
+          const cells = [...row.children];
+          const amountIndex = cells.findIndex((cell) => cell.textContent.includes("so'm"));
+          row.insertBefore(detailsCell, amountIndex >= 0 ? row.children[amountIndex] : null);
         });
       }
+      const title = document.querySelector(`[data-table="${tableId}"]`)?.dataset.file || filename || "hisobot";
+      const exportedAt = new Date().toLocaleString("uz-UZ");
       const html = `
         <html>
-          <head><meta charset="UTF-8"></head>
-          <body>${exportTable.outerHTML}</body>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; color: #1d2d44; }
+              h2 { margin: 0 0 4px; color: #16355b; }
+              p { margin: 0 0 12px; color: #687a95; }
+              table { border-collapse: collapse; width: 100%; }
+              th { background: #dceeff; color: #17375f; font-weight: 700; }
+              th, td { border: 1px solid #b9cbe0; padding: 8px; vertical-align: top; }
+              tr:nth-child(even) td { background: #f7fbff; }
+            </style>
+          </head>
+          <body>
+            <h2>${escapeHtml(title)}</h2>
+            <p>Eksport vaqti: ${escapeHtml(exportedAt)}${selected.length ? ` | Tanlangan qatorlar: ${selected.length}` : ""}</p>
+            ${exportTable.outerHTML}
+          </body>
         </html>
       `;
       const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
@@ -3920,6 +4040,50 @@
 
       el.movementEditForm.addEventListener("submit", (e) => {
         e.preventDefault();
+        if (el.movementEditForm.dataset.mode === "group") {
+          const ids = String(el.movementEditForm.dataset.groupIds || "").split(",").filter(Boolean);
+          const oldItems = ids.map((id) => state.movements.find((m) => m.id === id)).filter(Boolean);
+          if (!oldItems.length) {
+            showNotice(el.movementEditNotice, "Tahrirlanadigan qator topilmadi.", "bad");
+            return;
+          }
+          const date = el.movementEditDate.value;
+          const type = oldItems[0].type;
+          const driverId = movementNeedsDriver(type) ? el.movementEditDriver.value : null;
+          const note = el.movementEditNote.value.trim();
+          if (!date || (movementNeedsDriver(type) && !driverId)) {
+            showNotice(el.movementEditNotice, "Sana va haydovchini to'g'ri tanlang.", "bad");
+            return;
+          }
+          const editedItems = [];
+          for (const row of el.movementEditGroupBody.querySelectorAll("tr")) {
+            const old = state.movements.find((m) => m.id === row.dataset.groupMovementId);
+            const productId = row.querySelector('[data-group-field="product"]')?.value || "";
+            const unit = row.querySelector('[data-group-field="unit"]')?.value === "bag" ? "bag" : "piece";
+            const qty = toInt(row.querySelector('[data-group-field="qty"]')?.value);
+            const amount = Number(row.querySelector('[data-group-field="amount"]')?.value);
+            const product = getProduct(productId);
+            if (!old || !product || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(amount) || amount < 0) {
+              showNotice(el.movementEditNotice, "Guruhdagi mahsulot, miqdor va summalarni to'g'ri kiriting.", "bad");
+              return;
+            }
+            editedItems.push({ ...old, date, productId, unit, qty: Math.max(1, qty), pieces: toPieces(product, Math.max(1, qty), unit), amount: Math.max(0, amount), driverId, note });
+          }
+          const projectedMap = stockMap();
+          oldItems.forEach((m) => applyMovementToStockMap(projectedMap, m, -1));
+          editedItems.forEach((m) => applyMovementToStockMap(projectedMap, m, 1));
+          const negativeProductId = findNegativeStockProductId(projectedMap);
+          if (negativeProductId) {
+            const badProduct = getProduct(negativeProductId);
+            showNotice(el.movementEditNotice, `Bu tahrir sklad qoldig'ini manfiy qiladi: ${badProduct ? badProduct.name : negativeProductId}`, "bad");
+            return;
+          }
+          editedItems.forEach((edited) => Object.assign(state.movements.find((m) => m.id === edited.id), edited));
+          requestStateSave();
+          closeMovementEditModal();
+          renderAll();
+          return;
+        }
         const movementId = el.movementEditId.value;
         const movement = state.movements.find((m) => m.id === movementId);
         if (!movement) {
@@ -4064,6 +4228,16 @@
           const move = Number(pager.dataset.pagerMove || 0);
           state.pagination[key] = (state.pagination[key] || 1) + move;
           renderAll();
+          return;
+        }
+        const movementGroupEditBtn = e.target.closest(".movement-group-edit-btn");
+        if (movementGroupEditBtn) {
+          openMovementGroupEditModal(movementGroupEditBtn.dataset.movementEditIds);
+          return;
+        }
+        const movementGroupRow = e.target.closest(".movement-group-row");
+        if (movementGroupRow && !e.target.closest("button, input, select, a")) {
+          openMovementGroupEditModal(movementGroupRow.dataset.movementEditIds);
           return;
         }
         const movementEditBtn = e.target.closest(".movement-edit-btn");
