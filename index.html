@@ -908,21 +908,21 @@
         <small>1C va Sales Doctor uslubida</small>
       </div>
       <nav class="menu" id="menuList">
-        <button class="menu-item active" data-target="dashboardSection">Dashboard</button>
-        <button class="menu-item" data-target="driverOutSection">Haydovchilar Tovari</button>
-        <button class="menu-item" data-target="otherOutSection">Boshqa Chiqimlar</button>
-        <button class="menu-item" data-target="takenGoodsSection">Olingan Tovarlar</button>
-        <button class="menu-item" data-target="returnsSection">Vozvratlar</button>
-        <button class="menu-item" data-target="incomingSection">Skladga Kirim</button>
-        <button class="menu-item" data-target="incomingHistorySection">Kirimlar Tarixi</button>
-        <button class="menu-item" data-target="dailyFlowSection">Jami Kunlik Chiqim</button>
-        <button class="menu-item" data-target="returnsHistorySection">Vozvratlar Tarixi</button>
-        <button class="menu-item" data-target="driversSection">Haydovchilar</button>
-        <button class="menu-item" data-target="productsSection">Mahsulotlar</button>
-        <button class="menu-item" data-target="stockSection">Sklad</button>
-        <button class="menu-item" data-target="reportsSection">Hisobotlar</button>
-        <button class="menu-item" data-target="initialStockSection">Boshlang'ich Ostatka</button>
-        <button class="menu-item" data-target="profileSection">Profil</button>
+        <button type="button" class="menu-item active" data-target="dashboardSection">Dashboard</button>
+        <button type="button" class="menu-item" data-target="driverOutSection">Haydovchilar Tovari</button>
+        <button type="button" class="menu-item" data-target="otherOutSection">Boshqa Chiqimlar</button>
+        <button type="button" class="menu-item" data-target="takenGoodsSection">Olingan Tovarlar</button>
+        <button type="button" class="menu-item" data-target="returnsSection">Vozvratlar</button>
+        <button type="button" class="menu-item" data-target="incomingSection">Skladga Kirim</button>
+        <button type="button" class="menu-item" data-target="incomingHistorySection">Kirimlar Tarixi</button>
+        <button type="button" class="menu-item" data-target="dailyFlowSection">Jami Kunlik Chiqim</button>
+        <button type="button" class="menu-item" data-target="returnsHistorySection">Vozvratlar Tarixi</button>
+        <button type="button" class="menu-item" data-target="driversSection">Haydovchilar</button>
+        <button type="button" class="menu-item" data-target="productsSection">Mahsulotlar</button>
+        <button type="button" class="menu-item" data-target="stockSection">Sklad</button>
+        <button type="button" class="menu-item" data-target="reportsSection">Hisobotlar</button>
+        <button type="button" class="menu-item" data-target="initialStockSection">Boshlang'ich Ostatka</button>
+        <button type="button" class="menu-item" data-target="profileSection">Profil</button>
       </nav>
     </aside>
 
@@ -4135,6 +4135,11 @@
         if (e.key !== "Escape") return;
         if (!el.movementEditModal.classList.contains("hidden")) closeMovementEditModal();
         if (!el.driverEditModal.classList.contains("hidden")) closeDriverEditModal();
+      });
+
+      document.querySelectorAll(".menu-item").forEach((btn) => {
+        btn.type = "button";
+        btn.addEventListener("click", () => activateSection(btn.dataset.target));
       });
 
       el.menuList.addEventListener("click", (e) => {
