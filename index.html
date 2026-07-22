@@ -993,7 +993,14 @@
               <button id="clearGlobalFilter" class="btn btn-outline" type="button">Filtrdan chiqarish</button>
             </div>
           </div>
-          <p id="globalFilterText" class="inline-text" style="margin:0;">Filtr: o'chirilgan</p>
+          <p id="globalFilterText" class="inline-text" style="margin:0 0 10px;">Filtr: o'chirilgan</p>
+          <div class="range-controls">
+            <div class="field" style="margin:0;">
+              <label for="stockAsOfDate">Ostatka sanasi</label>
+              <input id="stockAsOfDate" type="date">
+            </div>
+            <button id="applyStockAsOfDate" class="btn btn-outline" type="button">Ostatkani ko'rish</button>
+          </div>
         </article>
 
         <section id="dashboardSection" class="section active">
@@ -1022,9 +1029,9 @@
               <span>Haydovchilar olgan tovar</span>
             </article>
             <article class="card kpi">
-              <h3>Sklad jami qoldiq summasi</h3>
+              <h3>Sklad ostatka summasi</h3>
               <strong id="kpiStockAmount">0 so'm</strong>
-              <span>Joriy ostatka</span>
+              <span id="kpiStockQty">0 mahsulot | 0 dona</span>
             </article>
           </div>
 
@@ -1664,6 +1671,7 @@
 
           <article class="card">
             <p class="inline-text" id="reportRangeText">Hisobot davri: Oxirgi 7 kun</p>
+            <p class="inline-text" id="reportStockAsOfText">Ostatka: bugungi sana bo'yicha</p>
             <div class="grid kpi-grid" style="margin-bottom:10px;">
               <div class="card kpi">
                 <h3>Jami kirim</h3>
@@ -2060,6 +2068,8 @@
       globalFrom: document.getElementById("globalFrom"),
       globalTo: document.getElementById("globalTo"),
       globalFilterText: document.getElementById("globalFilterText"),
+      stockAsOfDate: document.getElementById("stockAsOfDate"),
+      applyStockAsOfDate: document.getElementById("applyStockAsOfDate"),
 
       productForm: document.getElementById("productForm"),
       deleteProductForm: document.getElementById("deleteProductForm"),
@@ -2136,6 +2146,7 @@
       dailyFlowBody: document.getElementById("dailyFlowBody"),
 
       reportRangeText: document.getElementById("reportRangeText"),
+      reportStockAsOfText: document.getElementById("reportStockAsOfText"),
       reportsBody: document.getElementById("reportsBody"),
 
       movementEditModal: document.getElementById("movementEditModal"),
@@ -2520,17 +2531,32 @@
       return `${m.qty} ${unitName} (${qtyToText(p, m.pieces)})`;
     }
 
-    function stockMap() {
+    function stockMap(asOfDate = "") {
       const map = {};
       state.products.forEach((p) => {
         map[p.id] = Math.max(0, toInt(state.initialStock[p.id]) || 0);
       });
       state.movements.forEach((m) => {
         if (!(m.productId in map)) return;
+        if (asOfDate && m.date && m.date > asOfDate) return;
         if (movementDirection(m.type) === "in") map[m.productId] += m.pieces;
         else map[m.productId] -= m.pieces;
       });
       return map;
+    }
+
+    function stockTotals(asOfDate = "") {
+      const sMap = stockMap(asOfDate);
+      let amount = 0;
+      let pieces = 0;
+      let products = 0;
+      state.products.forEach((p) => {
+        const qty = Math.max(0, Number(sMap[p.id] || 0));
+        if (qty > 0) products += 1;
+        pieces += qty;
+        amount += Math.floor(qty / p.piecesPerBag) * p.priceBag + (qty % p.piecesPerBag) * p.pricePiece;
+      });
+      return { map: sMap, amount, pieces, products };
     }
 
     function sumBy(items, fn) {
@@ -3668,13 +3694,10 @@
       );
       document.getElementById("kpiTodayOutAmount").textContent = fmtMoney(todayOut);
 
-      const sMap = stockMap();
-      let stockSum = 0;
-      state.products.forEach((p) => {
-        const pieces = sMap[p.id] || 0;
-        stockSum += Math.floor(pieces / p.piecesPerBag) * p.priceBag + (pieces % p.piecesPerBag) * p.pricePiece;
-      });
-      document.getElementById("kpiStockAmount").textContent = fmtMoney(stockSum);
+      const stockDate = state.stockAsOfDate || todayIso();
+      const stockInfo = stockTotals(stockDate);
+      document.getElementById("kpiStockAmount").textContent = fmtMoney(stockInfo.amount);
+      document.getElementById("kpiStockQty").textContent = `${stockDate} holatiga: ${stockInfo.products} mahsulot | ${stockInfo.pieces.toLocaleString("uz-UZ")} dona`;
       el.dashRangeText.textContent = filterLabel().replace("Filtr:", "Oraliq:");
 
       if (!state.products.length) {
@@ -3802,8 +3825,13 @@
       document.getElementById("reportReturnAmount").textContent = fmtMoney(retAmount);
       document.getElementById("reportNetAmount").textContent = fmtMoney(outAmount - retAmount);
       el.reportRangeText.textContent = filterLabel().replace("Filtr:", "Hisobot davri:");
+      const reportStockDate = state.stockAsOfDate || todayIso();
+      const reportStockInfo = stockTotals(reportStockDate);
+      if (el.reportStockAsOfText) {
+        el.reportStockAsOfText.textContent = `Ostatka (${reportStockDate}): ${reportStockInfo.products} mahsulot | ${reportStockInfo.pieces.toLocaleString("uz-UZ")} dona | ${fmtMoney(reportStockInfo.amount)}`;
+      }
 
-      const sMap = stockMap();
+      const sMap = reportStockInfo.map;
       if (!state.products.length) {
         tableEmpty(el.reportsBody, 5, "Hisobot uchun mahsulot qo'shing.");
         renderPager("reportsTable", "reports", 0);
@@ -3852,6 +3880,7 @@
       renderAdminPanel();
       renderSelectors();
       el.globalFilterText.textContent = filterLabel();
+      if (el.stockAsOfDate && document.activeElement !== el.stockAsOfDate) el.stockAsOfDate.value = state.stockAsOfDate || todayIso();
       renderProducts();
       renderInitialStock();
       renderIncoming();
@@ -3863,6 +3892,76 @@
       renderDashboard();
       renderDailyFlow();
       renderReports();
+      ["incomingTable", "driverOutTable", "returnsTable", "otherOutTable", "dailyFlowTable"].forEach((tableId) => updateSelectAllState(document.getElementById(tableId)));
+    }
+
+    function selectedMovementIdsFromTable(tableId) {
+      const table = document.getElementById(tableId);
+      if (!table) return [];
+      const ids = new Set();
+      table.querySelectorAll("tbody .export-row-check:checked").forEach((check) => {
+        const row = check.closest("tr");
+        String(row?.dataset.movementEditIds || "").split(",").filter(Boolean).forEach((id) => ids.add(id));
+      });
+      return [...ids];
+    }
+
+    function deleteSelectedRows(tableId) {
+      const ids = selectedMovementIdsFromTable(tableId);
+      if (!ids.length) {
+        alert("O'chirish uchun qatorlarni belgilang.");
+        return;
+      }
+      if (!confirm(`${ids.length} ta ichki yozuvga tegishli tanlangan qatorlar o'chirilsinmi?`)) return;
+      state.movements = state.movements.filter((m) => !ids.includes(m.id));
+      requestStateSave();
+      renderAll();
+    }
+
+    function zeroAllStock() {
+      const sMap = stockMap();
+      const rows = state.products.map((p) => ({ product: p, pieces: Math.max(0, Number(sMap[p.id] || 0)) })).filter((row) => row.pieces > 0);
+      if (!rows.length) {
+        showNotice(el.stockEditNotice, "Sklad ostatkasi allaqachon 0.", "ok");
+        return;
+      }
+      if (!confirm("Skladdagi barcha joriy ostatka 0 qilinsinmi?")) return;
+      const date = todayIso();
+      const batchId = uid("batch");
+      rows.forEach(({ product, pieces }) => {
+        const bagQty = Math.floor(pieces / product.piecesPerBag);
+        const pieceQty = pieces % product.piecesPerBag;
+        const amounts = splitAmountsByPrices(bagQty, pieceQty, product.priceBag, product.pricePiece, calcAmountByPrices(bagQty, pieceQty, product.priceBag, product.pricePiece));
+        if (bagQty > 0) addMovement({ date, type: "adjust_out", productId: product.id, unit: "bag", qty: bagQty, amount: amounts.bagAmount, note: "Ostatka 0 qilindi", batchId });
+        if (pieceQty > 0) addMovement({ date, type: "adjust_out", productId: product.id, unit: "piece", qty: pieceQty, amount: amounts.pieceAmount, note: "Ostatka 0 qilindi", batchId });
+      });
+      showNotice(el.stockEditNotice, "Sklad ostatkasi 0 qilindi.", "ok");
+      renderAll();
+    }
+
+    function exportGroupTableRows(table, selectedRows) {
+      const sourceRows = selectedRows.length ? selectedRows : [...table.querySelectorAll("tbody tr")];
+      const rows = [];
+      sourceRows.forEach((row) => {
+        const ids = String(row.dataset.movementEditIds || "").split(",").filter(Boolean);
+        ids.forEach((id) => {
+          const m = state.movements.find((item) => item.id === id);
+          if (!m) return;
+          const p = getProduct(m.productId);
+          const d = getDriver(m.driverId);
+          rows.push({
+            date: safeDate(m.date),
+            status: movementTypeName(m.type),
+            owner: d ? d.name : m.note || "-",
+            product: p ? p.name : "-",
+            qty: movementQtyText(m),
+            amount: fmtMoney(m.amount),
+            source: movementSource(m.type),
+            note: m.note || "-"
+          });
+        });
+      });
+      return rows;
     }
 
     function selectedMovementIdsFromTable(tableId) {
