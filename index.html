@@ -1117,6 +1117,7 @@
             <h2>Kirimlar Tarixi</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="incomingTable" data-file="skladga-kirim">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="incomingTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
           <article class="card">
@@ -1145,6 +1146,7 @@
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="stockTable" data-file="sklad-ostatka">Excelga eksport</button>
               <button class="btn btn-outline export-btn" data-table="stockEditTable" data-file="sklad-tahrir-jurnali">Tahrir jurnalini eksport</button>
+              <button id="zeroStockBtn" class="btn btn-danger" type="button">Ostatkani 0 qilish</button>
             </div>
           </div>
 
@@ -1434,10 +1436,14 @@
             <h2>Olingan Tovarlar</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="driverOutTable" data-file="haydovchilar-tovari">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="driverOutTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
           <article class="card">
             <h3>Haydovchi olgan tovarlar</h3>
+            <div class="search-inline">
+              <input id="driverOutDriverSearch" placeholder="Haydovchi nomi bo'yicha qidirish...">
+            </div>
             <div class="table-wrap">
               <table id="driverOutTable">
                 <thead>
@@ -1513,6 +1519,7 @@
             <h2>Vozvratlar Tarixi</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="returnsTable" data-file="vozvratlar">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="returnsTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
           <article class="card">
@@ -1541,6 +1548,7 @@
             <h2>Boshqa Chiqimlar</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="otherOutTable" data-file="boshqa-chiqimlar">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="otherOutTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
 
@@ -1614,6 +1622,7 @@
             <h2>Jami Kunlik Chiqim</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="dailyFlowTable" data-file="jami-kunlik-chiqim">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="dailyFlowTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
           <article class="card" style="margin-bottom:12px;">
@@ -1987,6 +1996,8 @@
       movements: [],
       initialStock: {},
       selectedDriverId: null,
+      driverOutDriverSearch: "",
+      editingEntry: null,
       productSearch: {
         incoming: "",
         stockEdit: "",
@@ -2082,6 +2093,7 @@
       stockEditBody: document.getElementById("stockEditBody"),
       stockEditNotice: document.getElementById("stockEditNotice"),
       stockEditProductSearch: document.getElementById("stockEditProductSearch"),
+      zeroStockBtn: document.getElementById("zeroStockBtn"),
 
       driverForm: document.getElementById("driverForm"),
       driverNotice: document.getElementById("driverNotice"),
@@ -2097,6 +2109,7 @@
       driverOutNotice: document.getElementById("driverOutNotice"),
       driverOutComment: document.getElementById("driverOutComment"),
       driverOutProductSearch: document.getElementById("driverOutProductSearch"),
+      driverOutDriverSearch: document.getElementById("driverOutDriverSearch"),
 
       otherOutForm: document.getElementById("otherOutForm"),
       otherOutReason: document.getElementById("otherOutReason"),
@@ -3060,7 +3073,10 @@
         showNotice(noticeNode, "Sana tanlang.", "bad");
         return false;
       }
+      const editingIds = state.editingEntry && state.editingEntry.type === type ? state.editingEntry.ids : [];
+      const oldEditingItems = editingIds.map((id) => state.movements.find((m) => m.id === id)).filter(Boolean);
       const sMap = stockMap();
+      oldEditingItems.forEach((m) => applyMovementToStockMap(sMap, m, -1));
       if (type === "driverOut" || type === "otherOut") {
         const need = {};
         rows.forEach((r) => {
@@ -3113,6 +3129,7 @@
         }
       });
       clearEntryDraft(type);
+      if (state.editingEntry && state.editingEntry.type === type) state.editingEntry = null;
       return true;
     }
 
@@ -3848,6 +3865,50 @@
       renderReports();
     }
 
+    function selectedMovementIdsFromTable(tableId) {
+      const table = document.getElementById(tableId);
+      if (!table) return [];
+      const ids = new Set();
+      table.querySelectorAll("tbody .export-row-check:checked").forEach((check) => {
+        const row = check.closest("tr");
+        String(row?.dataset.movementEditIds || "").split(",").filter(Boolean).forEach((id) => ids.add(id));
+      });
+      return [...ids];
+    }
+
+    function deleteSelectedRows(tableId) {
+      const ids = selectedMovementIdsFromTable(tableId);
+      if (!ids.length) {
+        alert("O'chirish uchun qatorlarni belgilang.");
+        return;
+      }
+      if (!confirm(`${ids.length} ta ichki yozuvga tegishli tanlangan qatorlar o'chirilsinmi?`)) return;
+      state.movements = state.movements.filter((m) => !ids.includes(m.id));
+      requestStateSave();
+      renderAll();
+    }
+
+    function zeroAllStock() {
+      const sMap = stockMap();
+      const rows = state.products.map((p) => ({ product: p, pieces: Math.max(0, Number(sMap[p.id] || 0)) })).filter((row) => row.pieces > 0);
+      if (!rows.length) {
+        showNotice(el.stockEditNotice, "Sklad ostatkasi allaqachon 0.", "ok");
+        return;
+      }
+      if (!confirm("Skladdagi barcha joriy ostatka 0 qilinsinmi?")) return;
+      const date = todayIso();
+      const batchId = uid("batch");
+      rows.forEach(({ product, pieces }) => {
+        const bagQty = Math.floor(pieces / product.piecesPerBag);
+        const pieceQty = pieces % product.piecesPerBag;
+        const amounts = splitAmountsByPrices(bagQty, pieceQty, product.priceBag, product.pricePiece, calcAmountByPrices(bagQty, pieceQty, product.priceBag, product.pricePiece));
+        if (bagQty > 0) addMovement({ date, type: "adjust_out", productId: product.id, unit: "bag", qty: bagQty, amount: amounts.bagAmount, note: "Ostatka 0 qilindi", batchId });
+        if (pieceQty > 0) addMovement({ date, type: "adjust_out", productId: product.id, unit: "piece", qty: pieceQty, amount: amounts.pieceAmount, note: "Ostatka 0 qilindi", batchId });
+      });
+      showNotice(el.stockEditNotice, "Sklad ostatkasi 0 qilindi.", "ok");
+      renderAll();
+    }
+
     function exportTableToExcel(tableId, filename) {
       const table = document.getElementById(tableId);
       if (!table) return;
@@ -3981,8 +4042,7 @@
         const btn = e.target.closest(".menu-item");
         if (!btn) return;
         const target = btn.dataset.target;
-        el.sections.forEach((s) => s.classList.toggle("active", s.id === target));
-        document.querySelectorAll(".menu-item").forEach((m) => m.classList.toggle("active", m.dataset.target === target));
+        activateSection(target);
       });
 
       [
@@ -4002,6 +4062,14 @@
           renderAll();
         });
       });
+
+      if (el.driverOutDriverSearch) {
+        el.driverOutDriverSearch.addEventListener("input", () => {
+          state.driverOutDriverSearch = el.driverOutDriverSearch.value || "";
+          state.pagination.driverOut = 1;
+          renderDriverOut();
+        });
+      }
 
       [
         { node: el.adminName, key: "name" },
@@ -4220,6 +4288,14 @@
       document.querySelectorAll(".export-btn").forEach((btn) => {
         btn.addEventListener("click", () => exportTableToExcel(btn.dataset.table, btn.dataset.file));
       });
+
+      document.querySelectorAll(".delete-selected-btn").forEach((btn) => {
+        btn.addEventListener("click", () => deleteSelectedRows(btn.dataset.table));
+      });
+
+      if (el.zeroStockBtn) {
+        el.zeroStockBtn.addEventListener("click", zeroAllStock);
+      }
 
       document.addEventListener("click", (e) => {
         const pager = e.target.closest("[data-pager-key]");
