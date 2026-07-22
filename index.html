@@ -2722,69 +2722,40 @@
       el.movementEditModal.classList.remove("hidden");
     }
 
-    function movementTypeToEntryType(type) {
-      if (type === "incoming") return "incoming";
-      if (type === "driver_out") return "driverOut";
-      if (type === "other_out") return "otherOut";
-      if (type === "driver_return") return "return";
-      return "";
-    }
-
-    function entryTypeSection(type) {
-      if (type === "incoming") return "incomingSection";
-      if (type === "driverOut") return "driverOutSection";
-      if (type === "otherOut") return "otherOutSection";
-      if (type === "return") return "returnsSection";
-      return "dashboardSection";
-    }
-
-    function entryTypeNotice(type) {
-      if (type === "incoming") return el.incomingNotice;
-      if (type === "driverOut") return el.driverOutNotice;
-      if (type === "otherOut") return el.otherOutNotice;
-      if (type === "return") return el.returnNotice;
-      return el.incomingNotice;
-    }
-
-    function activateSection(target) {
-      el.sections.forEach((section) => section.classList.toggle("active", section.id === target));
-      document.querySelectorAll(".menu-item").forEach((item) => item.classList.toggle("active", item.dataset.target === target));
-    }
-
-    function loadGroupIntoEntryForm(idsText) {
+    function openMovementGroupEditModal(idsText) {
       const ids = String(idsText || "").split(",").filter(Boolean);
       const items = ids.map((id) => state.movements.find((m) => m.id === id)).filter(Boolean);
       if (!items.length) return;
       const first = items[0];
-      const entryType = movementTypeToEntryType(first.type);
-      if (!entryType) return;
-      state.editingEntry = { ids, type: entryType };
-      state.entryDrafts[entryType] = {};
-      items.forEach((m) => {
-        const draft = ensureEntryDraft(entryType, m.productId);
-        const qty = Math.max(0, toInt(m.qty) || 0);
-        if (m.unit === "bag") draft.bag = String((toInt(draft.bag) || 0) + qty);
-        else draft.piece = String((toInt(draft.piece) || 0) + qty);
-        draft.amount = String((Number(draft.amount) || 0) + Number(m.amount || 0));
+      el.movementEditForm.dataset.mode = "group";
+      el.movementEditForm.dataset.groupIds = ids.join(",");
+      el.movementEditId.value = first.id;
+      el.movementEditType.value = movementTypeName(first.type);
+      el.movementEditDate.value = first.date || todayIso();
+      fillDriverSelect(el.movementEditDriver, first.driverId || "");
+      el.movementEditNote.value = first.note || "";
+      el.movementEditDriverWrap.classList.toggle("hidden", !movementNeedsDriver(first.type));
+      [el.movementEditProduct, el.movementEditUnit, el.movementEditQty, el.movementEditAmount].forEach((node) => {
+        node.disabled = true;
+        node?.closest(".field")?.classList.add("hidden");
       });
-      document.getElementById(entryType === "incoming" ? "incomingDate" : entryType === "driverOut" ? "driverOutDate" : entryType === "otherOut" ? "otherOutDate" : "returnDate").value = first.date || todayIso();
-      if (entryType === "driverOut") {
-        el.driverOutDriver.value = first.driverId || "";
-        el.driverOutComment.value = first.note || "";
-      }
-      if (entryType === "return") {
-        el.returnDriver.value = first.driverId || "";
-        el.returnComment.value = first.note || "";
-      }
-      if (entryType === "otherOut" && first.note) el.otherOutReason.value = first.note;
-      if (entryType === "incoming") el.incomingComment.value = first.note || "";
-      activateSection(entryTypeSection(entryType));
-      renderAll();
-      showNotice(entryTypeNotice(entryType), "Tahrirlash rejimi: kerakli mahsulotlarni yangilab, qayta saqlang.", "ok");
-    }
-
-    function openMovementGroupEditModal(idsText) {
-      loadGroupIntoEntryForm(idsText);
+      el.movementEditGroupWrap.classList.remove("hidden");
+      el.movementEditGroupBody.innerHTML = "";
+      items.forEach((m) => {
+        const tr = document.createElement("tr");
+        tr.dataset.groupMovementId = m.id;
+        tr.innerHTML = `
+          <td><select class="entry-input" data-group-field="product"></select></td>
+          <td><select class="entry-input" data-group-field="unit"><option value="bag">Qop</option><option value="piece">Dona</option></select></td>
+          <td><input class="entry-input" data-group-field="qty" type="number" min="1" step="1" value="${m.qty}"></td>
+          <td><input class="entry-input" data-group-field="amount" type="number" min="0" step="1" value="${Number(m.amount || 0)}"></td>
+        `;
+        el.movementEditGroupBody.appendChild(tr);
+        fillProductSelect(tr.querySelector('[data-group-field="product"]'), m.productId);
+        tr.querySelector('[data-group-field="unit"]').value = m.unit === "bag" ? "bag" : "piece";
+      });
+      clearNotice(el.movementEditNotice);
+      el.movementEditModal.classList.remove("hidden");
     }
 
     function closeDriverEditModal() {
@@ -3123,9 +3094,6 @@
         }
       }
 
-      if (oldEditingItems.length) {
-        state.movements = state.movements.filter((m) => !editingIds.includes(m.id));
-      }
       const batchId = uid("batch");
       rows.forEach((r) => {
         const p = getProduct(r.productId);
@@ -3584,13 +3552,7 @@
     }
 
     function renderDriverOut() {
-      const driverQuery = normalizeSearch(state.driverOutDriverSearch);
-      const rows = groupedMovements(state.movements.filter((m) => m.type === "driver_out").filter(movementInGlobalFilter))
-        .filter((g) => {
-          if (!driverQuery) return true;
-          const d = getDriver(g.driverId);
-          return normalizeSearch(d ? d.name : "").includes(driverQuery);
-        });
+      const rows = groupedMovements(state.movements.filter((m) => m.type === "driver_out").filter(movementInGlobalFilter));
       if (!rows.length) {
         tableEmpty(el.driverOutBody, 7, "Haydovchilar olgan tovarlar yo'q.");
         renderPager("driverOutTable", "driverOut", 0);
