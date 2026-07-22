@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
@@ -748,6 +748,11 @@
       width: min(380px, 100%);
     }
 
+    .select-cell {
+      text-align: center;
+      vertical-align: middle;
+    }
+
     .row-actions {
       display: flex;
       flex-wrap: wrap;
@@ -1112,6 +1117,7 @@
             <h2>Kirimlar Tarixi</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="incomingTable" data-file="skladga-kirim">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="incomingTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
           <article class="card">
@@ -1120,10 +1126,11 @@
               <table id="incomingTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
+                    <th>Holat</th>
                     <th>Summa</th>
+                    <th>Izoh</th>
                     <th>Amallar</th>
                   </tr>
                 </thead>
@@ -1139,6 +1146,7 @@
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="stockTable" data-file="sklad-ostatka">Excelga eksport</button>
               <button class="btn btn-outline export-btn" data-table="stockEditTable" data-file="sklad-tahrir-jurnali">Tahrir jurnalini eksport</button>
+              <button id="zeroStockBtn" class="btn btn-danger" type="button">Ostatkani 0 qilish</button>
             </div>
           </div>
 
@@ -1428,19 +1436,24 @@
             <h2>Olingan Tovarlar</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="driverOutTable" data-file="haydovchilar-tovari">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="driverOutTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
           <article class="card">
             <h3>Haydovchi olgan tovarlar</h3>
+            <div class="search-inline">
+              <input id="driverOutDriverSearch" placeholder="Haydovchi nomi bo'yicha qidirish...">
+            </div>
             <div class="table-wrap">
               <table id="driverOutTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
+                    <th>Holat</th>
                     <th>Haydovchi</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
                     <th>Summa</th>
+                    <th>Izoh</th>
                     <th>Amallar</th>
                   </tr>
                 </thead>
@@ -1506,6 +1519,7 @@
             <h2>Vozvratlar Tarixi</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="returnsTable" data-file="vozvratlar">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="returnsTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
           <article class="card">
@@ -1514,11 +1528,12 @@
               <table id="returnsTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
+                    <th>Holat</th>
                     <th>Haydovchi</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
                     <th>Summa</th>
+                    <th>Izoh</th>
                     <th>Amallar</th>
                   </tr>
                 </thead>
@@ -1533,6 +1548,7 @@
             <h2>Boshqa Chiqimlar</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="otherOutTable" data-file="boshqa-chiqimlar">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="otherOutTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
 
@@ -1587,10 +1603,10 @@
               <table id="otherOutTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
+                    <th>Holat</th>
                     <th>Sabab</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
                     <th>Summa</th>
                     <th>Amallar</th>
                   </tr>
@@ -1606,6 +1622,7 @@
             <h2>Jami Kunlik Chiqim</h2>
             <div class="actions">
               <button class="btn btn-outline export-btn" data-table="dailyFlowTable" data-file="jami-kunlik-chiqim">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="dailyFlowTable" type="button">Tanlanganlarni o'chirish</button>
             </div>
           </div>
           <article class="card" style="margin-bottom:12px;">
@@ -1622,11 +1639,10 @@
               <table id="dailyFlowTable">
                 <thead>
                   <tr>
+                    <th>Tanlash</th>
                     <th>Sana</th>
                     <th>Holat</th>
-                    <th>Haydovchi</th>
-                    <th>Mahsulot</th>
-                    <th>Miqdor</th>
+                    <th>Haydovchi/Sabab</th>
                     <th>Summa</th>
                     <th>Manba</th>
                     <th>Amallar</th>
@@ -1812,6 +1828,19 @@
             <input id="movementEditNote" placeholder="Ixtiyoriy">
           </div>
         </div>
+        <div id="movementEditGroupWrap" class="table-wrap hidden" style="margin-top:10px;">
+          <table id="movementEditGroupTable">
+            <thead>
+              <tr>
+                <th>Mahsulot</th>
+                <th>Birlik</th>
+                <th>Miqdor</th>
+                <th>Summa</th>
+              </tr>
+            </thead>
+            <tbody id="movementEditGroupBody"></tbody>
+          </table>
+        </div>
         <div class="actions">
           <button class="btn btn-primary" type="submit">Saqlash</button>
           <button id="movementEditCancelBtn" class="btn btn-soft" type="button">Bekor qilish</button>
@@ -1861,7 +1890,7 @@
   </div>
 
   <script>
-    const PAGE_SIZE = 20;
+    const PAGE_SIZE = 30;
     const INITIAL_PRODUCTS = [
       { name: "РЎР°Р»С„РµС‚РєРё NILPAK 2-С… СЃР»РѕР№РЅС‹Рµ 30x32 Р¶С‘Р»С‚С‹Р№ 30С€С‚/30", pieces: 30, price: 7500 },
       { name: "РЎР°Р»С„РµС‚РєРё NILPAK 2-С… СЃР»РѕР№РЅС‹Рµ 30x32 Р·РµР»С‘РЅС‹Р№ 30С€С‚/30", pieces: 30, price: 7500 },
@@ -1967,6 +1996,8 @@
       movements: [],
       initialStock: {},
       selectedDriverId: null,
+      driverOutDriverSearch: "",
+      editingEntry: null,
       productSearch: {
         incoming: "",
         stockEdit: "",
@@ -2062,6 +2093,7 @@
       stockEditBody: document.getElementById("stockEditBody"),
       stockEditNotice: document.getElementById("stockEditNotice"),
       stockEditProductSearch: document.getElementById("stockEditProductSearch"),
+      zeroStockBtn: document.getElementById("zeroStockBtn"),
 
       driverForm: document.getElementById("driverForm"),
       driverNotice: document.getElementById("driverNotice"),
@@ -2077,6 +2109,7 @@
       driverOutNotice: document.getElementById("driverOutNotice"),
       driverOutComment: document.getElementById("driverOutComment"),
       driverOutProductSearch: document.getElementById("driverOutProductSearch"),
+      driverOutDriverSearch: document.getElementById("driverOutDriverSearch"),
 
       otherOutForm: document.getElementById("otherOutForm"),
       otherOutReason: document.getElementById("otherOutReason"),
@@ -2114,6 +2147,8 @@
       movementEditUnit: document.getElementById("movementEditUnit"),
       movementEditQty: document.getElementById("movementEditQty"),
       movementEditAmount: document.getElementById("movementEditAmount"),
+      movementEditGroupWrap: document.getElementById("movementEditGroupWrap"),
+      movementEditGroupBody: document.getElementById("movementEditGroupBody"),
       movementEditDriverWrap: document.getElementById("movementEditDriverWrap"),
       movementEditDriver: document.getElementById("movementEditDriver"),
       movementEditNote: document.getElementById("movementEditNote"),
@@ -2528,6 +2563,53 @@
       return `<div class="row-actions">${movementEditButton(id)}${movementDeleteButton(id)}</div>`;
     }
 
+    function movementGroupKey(m) {
+      return m.batchId || [m.type, m.date, m.driverId || "", m.note || ""].join("|");
+    }
+
+    function groupedMovements(rows) {
+      const groups = new Map();
+      rows.forEach((m) => {
+        const key = movementGroupKey(m);
+        if (!groups.has(key)) {
+          groups.set(key, {
+            key,
+            date: m.date,
+            type: m.type,
+            driverId: m.driverId || "",
+            note: m.note || "",
+            items: [],
+            amount: 0
+          });
+        }
+        const group = groups.get(key);
+        group.items.push(m);
+        group.amount += Number(m.amount || 0);
+        if ((m.date || "") > (group.date || "")) group.date = m.date;
+      });
+      return [...groups.values()].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    }
+
+    function groupIds(group) {
+      return group.items.map((m) => m.id).join(",");
+    }
+
+    function movementGroupDetails(group) {
+      return group.items.map((m) => {
+        const p = getProduct(m.productId);
+        return `${p ? p.name : "-"}: ${movementQtyText(m)} - ${fmtMoney(m.amount)}`;
+      }).join("; ");
+    }
+
+    function groupActionButtons(group) {
+      const ids = groupIds(group);
+      return `<div class="row-actions"><button class="btn btn-soft btn-sm movement-group-edit-btn" data-movement-edit-ids="${ids}" type="button">Tahrir</button><button class="btn btn-danger btn-sm movement-group-delete-btn" data-movement-delete-ids="${ids}" type="button">O'chirish</button></div>`;
+    }
+
+    function selectCell(id) {
+      return `<td class="select-cell"><input class="export-row-check" data-export-row="${id}" type="checkbox" aria-label="Excel uchun tanlash"></td>`;
+    }
+
     function normalizeSearch(value) {
       return String(value || "").trim().toLocaleLowerCase("uz-UZ");
     }
@@ -2610,12 +2692,22 @@
 
     function closeMovementEditModal() {
       el.movementEditModal.classList.add("hidden");
+      el.movementEditForm.dataset.mode = "single";
+      delete el.movementEditForm.dataset.groupIds;
       clearNotice(el.movementEditNotice);
     }
 
     function openMovementEditModal(movementId) {
       const movement = state.movements.find((m) => m.id === movementId);
       if (!movement) return;
+      el.movementEditForm.dataset.mode = "single";
+      delete el.movementEditForm.dataset.groupIds;
+      [el.movementEditProduct, el.movementEditUnit, el.movementEditQty, el.movementEditAmount].forEach((node) => {
+        node.disabled = false;
+        node?.closest(".field")?.classList.remove("hidden");
+      });
+      el.movementEditGroupWrap.classList.add("hidden");
+      el.movementEditGroupBody.innerHTML = "";
       el.movementEditId.value = movement.id;
       el.movementEditType.value = movementTypeName(movement.type);
       el.movementEditDate.value = movement.date || todayIso();
@@ -2628,6 +2720,71 @@
       el.movementEditDriverWrap.classList.toggle("hidden", !movementNeedsDriver(movement.type));
       clearNotice(el.movementEditNotice);
       el.movementEditModal.classList.remove("hidden");
+    }
+
+    function movementTypeToEntryType(type) {
+      if (type === "incoming") return "incoming";
+      if (type === "driver_out") return "driverOut";
+      if (type === "other_out") return "otherOut";
+      if (type === "driver_return") return "return";
+      return "";
+    }
+
+    function entryTypeSection(type) {
+      if (type === "incoming") return "incomingSection";
+      if (type === "driverOut") return "driverOutSection";
+      if (type === "otherOut") return "otherOutSection";
+      if (type === "return") return "returnsSection";
+      return "dashboardSection";
+    }
+
+    function entryTypeNotice(type) {
+      if (type === "incoming") return el.incomingNotice;
+      if (type === "driverOut") return el.driverOutNotice;
+      if (type === "otherOut") return el.otherOutNotice;
+      if (type === "return") return el.returnNotice;
+      return el.incomingNotice;
+    }
+
+    function activateSection(target) {
+      el.sections.forEach((section) => section.classList.toggle("active", section.id === target));
+      document.querySelectorAll(".menu-item").forEach((item) => item.classList.toggle("active", item.dataset.target === target));
+    }
+
+    function loadGroupIntoEntryForm(idsText) {
+      const ids = String(idsText || "").split(",").filter(Boolean);
+      const items = ids.map((id) => state.movements.find((m) => m.id === id)).filter(Boolean);
+      if (!items.length) return;
+      const first = items[0];
+      const entryType = movementTypeToEntryType(first.type);
+      if (!entryType) return;
+      state.editingEntry = { ids, type: entryType };
+      state.entryDrafts[entryType] = {};
+      items.forEach((m) => {
+        const draft = ensureEntryDraft(entryType, m.productId);
+        const qty = Math.max(0, toInt(m.qty) || 0);
+        if (m.unit === "bag") draft.bag = String((toInt(draft.bag) || 0) + qty);
+        else draft.piece = String((toInt(draft.piece) || 0) + qty);
+        draft.amount = String((Number(draft.amount) || 0) + Number(m.amount || 0));
+      });
+      document.getElementById(entryType === "incoming" ? "incomingDate" : entryType === "driverOut" ? "driverOutDate" : entryType === "otherOut" ? "otherOutDate" : "returnDate").value = first.date || todayIso();
+      if (entryType === "driverOut") {
+        el.driverOutDriver.value = first.driverId || "";
+        el.driverOutComment.value = first.note || "";
+      }
+      if (entryType === "return") {
+        el.returnDriver.value = first.driverId || "";
+        el.returnComment.value = first.note || "";
+      }
+      if (entryType === "otherOut" && first.note) el.otherOutReason.value = first.note;
+      if (entryType === "incoming") el.incomingComment.value = first.note || "";
+      activateSection(entryTypeSection(entryType));
+      renderAll();
+      showNotice(entryTypeNotice(entryType), "Tahrirlash rejimi: kerakli mahsulotlarni yangilab, qayta saqlang.", "ok");
+    }
+
+    function openMovementGroupEditModal(idsText) {
+      loadGroupIntoEntryForm(idsText);
     }
 
     function closeDriverEditModal() {
@@ -2733,7 +2890,7 @@
       const p = pageInfo(key, totalItems);
       pager.innerHTML = `
         <button class="pager-btn" data-pager-key="${key}" data-pager-move="-1" ${p.page <= 1 ? "disabled" : ""}>Oldingi</button>
-        <span class="pager-info">${p.page} / ${p.pages} (har betda 20 qator)</span>
+        <span class="pager-info">${p.page} / ${p.pages} (har betda 30 qator)</span>
         <button class="pager-btn" data-pager-key="${key}" data-pager-move="1" ${p.page >= p.pages ? "disabled" : ""}>Keyingi</button>
       `;
     }
@@ -2825,7 +2982,7 @@
       requestStateSave();
     }
 
-    function addMovement({ date, type, productId, unit, qty, amount, driverId = null, note = "" }) {
+    function addMovement({ date, type, productId, unit, qty, amount, driverId = null, note = "", batchId = "" }) {
       const product = getProduct(productId);
       if (!product) return false;
       state.movements.push({
@@ -2838,7 +2995,8 @@
         pieces: toPieces(product, qty, unit),
         amount: Number(amount || 0),
         driverId,
-        note
+        note,
+        batchId
       });
       requestStateSave();
       return true;
@@ -2866,6 +3024,7 @@
       driverSelectIds.forEach((id) => {
         const select = document.getElementById(id);
         if (!select) return;
+        const selectedValue = select.value;
         select.innerHTML = "";
         if (!state.drivers.length) {
           select.innerHTML = "<option value=''>Haydovchi yo'q</option>";
@@ -2875,6 +3034,7 @@
           const op = document.createElement("option");
           op.value = d.id;
           op.textContent = d.name;
+          if (d.id === selectedValue) op.selected = true;
           select.appendChild(op);
         });
       });
@@ -2942,7 +3102,10 @@
         showNotice(noticeNode, "Sana tanlang.", "bad");
         return false;
       }
+      const editingIds = state.editingEntry && state.editingEntry.type === type ? state.editingEntry.ids : [];
+      const oldEditingItems = editingIds.map((id) => state.movements.find((m) => m.id === id)).filter(Boolean);
       const sMap = stockMap();
+      oldEditingItems.forEach((m) => applyMovementToStockMap(sMap, m, -1));
       if (type === "driverOut" || type === "otherOut") {
         const need = {};
         rows.forEach((r) => {
@@ -2960,6 +3123,10 @@
         }
       }
 
+      if (oldEditingItems.length) {
+        state.movements = state.movements.filter((m) => !editingIds.includes(m.id));
+      }
+      const batchId = uid("batch");
       rows.forEach((r) => {
         const p = getProduct(r.productId);
         if (!p) return;
@@ -2975,7 +3142,8 @@
             qty: r.bagQty,
             amount: amounts.bagAmount,
             driverId,
-            note
+            note,
+            batchId
           });
         }
         if (r.pieceQty > 0) {
@@ -2987,11 +3155,13 @@
             qty: r.pieceQty,
             amount: amounts.pieceAmount,
             driverId,
-            note
+            note,
+            batchId
           });
         }
       });
       clearEntryDraft(type);
+      if (state.editingEntry && state.editingEntry.type === type) state.editingEntry = null;
       return true;
     }
 
@@ -3167,25 +3337,27 @@
     }
 
     function renderIncoming() {
-      const rows = state.movements
+      const rows = groupedMovements(state.movements
         .filter((m) => m.type === "incoming")
-        .filter(movementInGlobalFilter)
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+        .filter(movementInGlobalFilter));
       if (!rows.length) {
-        tableEmpty(el.incomingBody, 5, "Skladga kirimlar yo'q.");
+        tableEmpty(el.incomingBody, 6, "Skladga kirimlar yo'q.");
         renderPager("incomingTable", "incoming", 0);
       } else {
         const { pageRows } = slicePage(rows, "incoming");
         el.incomingBody.innerHTML = "";
-        pageRows.forEach((m) => {
-          const p = getProduct(m.productId);
+        pageRows.forEach((g) => {
           const tr = document.createElement("tr");
+          tr.className = "movement-group-row";
+          tr.dataset.movementEditIds = groupIds(g);
+          tr.dataset.exportDetails = movementGroupDetails(g);
           tr.innerHTML = `
-            <td>${safeDate(m.date)}</td>
-            <td>${p ? p.name : "-"}</td>
-            <td>${movementQtyText(m)}</td>
-            <td>${fmtMoney(m.amount)}</td>
-            <td>${movementActionButtons(m.id)}</td>
+            ${selectCell(g.key)}
+            <td>${safeDate(g.date)}</td>
+            <td>${movementLabel(g.type)}</td>
+            <td>${fmtMoney(g.amount)}</td>
+            <td>${escapeHtml(g.note || "-")}</td>
+            <td>${groupActionButtons(g)}</td>
           `;
           el.incomingBody.appendChild(tr);
         });
@@ -3412,27 +3584,33 @@
     }
 
     function renderDriverOut() {
-      const rows = state.movements
-        .filter((m) => m.type === "driver_out")
-        .filter(movementInGlobalFilter)
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+      const driverQuery = normalizeSearch(state.driverOutDriverSearch);
+      const rows = groupedMovements(state.movements.filter((m) => m.type === "driver_out").filter(movementInGlobalFilter))
+        .filter((g) => {
+          if (!driverQuery) return true;
+          const d = getDriver(g.driverId);
+          return normalizeSearch(d ? d.name : "").includes(driverQuery);
+        });
       if (!rows.length) {
-        tableEmpty(el.driverOutBody, 6, "Haydovchilar olgan tovarlar yo'q.");
+        tableEmpty(el.driverOutBody, 7, "Haydovchilar olgan tovarlar yo'q.");
         renderPager("driverOutTable", "driverOut", 0);
       } else {
         const { pageRows } = slicePage(rows, "driverOut");
         el.driverOutBody.innerHTML = "";
-        pageRows.forEach((m) => {
-          const p = getProduct(m.productId);
-          const d = getDriver(m.driverId);
+        pageRows.forEach((g) => {
+          const d = getDriver(g.driverId);
           const tr = document.createElement("tr");
+          tr.className = "movement-group-row";
+          tr.dataset.movementEditIds = groupIds(g);
+          tr.dataset.exportDetails = movementGroupDetails(g);
           tr.innerHTML = `
-            <td>${safeDate(m.date)}</td>
-            <td>${d ? d.name : "-"}</td>
-            <td>${p ? p.name : "-"}</td>
-            <td>${movementQtyText(m)}</td>
-            <td>${fmtMoney(m.amount)}</td>
-            <td>${movementActionButtons(m.id)}</td>
+            ${selectCell(g.key)}
+            <td>${safeDate(g.date)}</td>
+            <td>${movementLabel(g.type)}</td>
+            <td>${d ? escapeHtml(d.name) : "-"}</td>
+            <td>${fmtMoney(g.amount)}</td>
+            <td>${escapeHtml(g.note || "-")}</td>
+            <td>${groupActionButtons(g)}</td>
           `;
           el.driverOutBody.appendChild(tr);
         });
@@ -3442,27 +3620,27 @@
     }
 
     function renderReturns() {
-      const rows = state.movements
-        .filter((m) => m.type === "driver_return")
-        .filter(movementInGlobalFilter)
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+      const rows = groupedMovements(state.movements.filter((m) => m.type === "driver_return").filter(movementInGlobalFilter));
       if (!rows.length) {
-        tableEmpty(el.returnsBody, 6, "Vozvratlar yo'q.");
+        tableEmpty(el.returnsBody, 7, "Vozvratlar yo'q.");
         renderPager("returnsTable", "returns", 0);
       } else {
         const { pageRows } = slicePage(rows, "returns");
         el.returnsBody.innerHTML = "";
-        pageRows.forEach((m) => {
-          const p = getProduct(m.productId);
-          const d = getDriver(m.driverId);
+        pageRows.forEach((g) => {
+          const d = getDriver(g.driverId);
           const tr = document.createElement("tr");
+          tr.className = "movement-group-row";
+          tr.dataset.movementEditIds = groupIds(g);
+          tr.dataset.exportDetails = movementGroupDetails(g);
           tr.innerHTML = `
-            <td>${safeDate(m.date)}</td>
-            <td>${d ? d.name : "-"}</td>
-            <td>${p ? p.name : "-"}</td>
-            <td>${movementQtyText(m)}</td>
-            <td>${fmtMoney(m.amount)}</td>
-            <td>${movementActionButtons(m.id)}</td>
+            ${selectCell(g.key)}
+            <td>${safeDate(g.date)}</td>
+            <td>${movementLabel(g.type)}</td>
+            <td>${d ? escapeHtml(d.name) : "-"}</td>
+            <td>${fmtMoney(g.amount)}</td>
+            <td>${escapeHtml(g.note || "-")}</td>
+            <td>${groupActionButtons(g)}</td>
           `;
           el.returnsBody.appendChild(tr);
         });
@@ -3472,26 +3650,25 @@
     }
 
     function renderOtherOut() {
-      const rows = state.movements
-        .filter((m) => m.type === "other_out")
-        .filter(movementInGlobalFilter)
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+      const rows = groupedMovements(state.movements.filter((m) => m.type === "other_out").filter(movementInGlobalFilter));
       if (!rows.length) {
         tableEmpty(el.otherOutBody, 6, "Boshqa chiqimlar yo'q.");
         renderPager("otherOutTable", "otherOut", 0);
       } else {
         const { pageRows } = slicePage(rows, "otherOut");
         el.otherOutBody.innerHTML = "";
-        pageRows.forEach((m) => {
-          const p = getProduct(m.productId);
+        pageRows.forEach((g) => {
           const tr = document.createElement("tr");
+          tr.className = "movement-group-row";
+          tr.dataset.movementEditIds = groupIds(g);
+          tr.dataset.exportDetails = movementGroupDetails(g);
           tr.innerHTML = `
-            <td>${safeDate(m.date)}</td>
-            <td>${m.note || "-"}</td>
-            <td>${p ? p.name : "-"}</td>
-            <td>${movementQtyText(m)}</td>
-            <td>${fmtMoney(m.amount)}</td>
-            <td>${movementActionButtons(m.id)}</td>
+            ${selectCell(g.key)}
+            <td>${safeDate(g.date)}</td>
+            <td>${movementLabel(g.type)}</td>
+            <td>${escapeHtml(g.note || "-")}</td>
+            <td>${fmtMoney(g.amount)}</td>
+            <td>${groupActionButtons(g)}</td>
           `;
           el.otherOutBody.appendChild(tr);
         });
@@ -3585,40 +3762,40 @@
     }
 
     function renderDailyFlow() {
-      const rows = state.movements
+      const rows = groupedMovements(state.movements
         .filter((m) => m.type === "driver_out" || m.type === "other_out" || m.type === "driver_return")
         .filter(movementInGlobalFilter)
         .filter((m) => {
           if (state.flowType === "all") return true;
           if (state.flowType === "out") return m.type === "driver_out" || m.type === "other_out";
           return m.type === "driver_return";
-        })
-        .sort((a, b) => (a.date < b.date ? 1 : -1));
+        }));
 
       el.flowRangeText.textContent = `${filterLabel().replace("Filtr:", "Oraliq:")} | Filtr turi: ${
         state.flowType === "all" ? "Barchasi" : state.flowType === "out" ? "Faqat Chiqim" : "Faqat Kirim"
       }`;
 
       if (!rows.length) {
-        tableEmpty(el.dailyFlowBody, 8, "Tanlangan oraliqda harakatlar topilmadi.");
+        tableEmpty(el.dailyFlowBody, 7, "Tanlangan oraliqda harakatlar topilmadi.");
         renderPager("dailyFlowTable", "dailyFlow", 0);
         return;
       }
       const { pageRows } = slicePage(rows, "dailyFlow");
       el.dailyFlowBody.innerHTML = "";
-      pageRows.forEach((m) => {
-        const p = getProduct(m.productId);
-        const d = getDriver(m.driverId);
+      pageRows.forEach((g) => {
+        const d = getDriver(g.driverId);
         const tr = document.createElement("tr");
+        tr.className = "movement-group-row";
+        tr.dataset.movementEditIds = groupIds(g);
+        tr.dataset.exportDetails = movementGroupDetails(g);
         tr.innerHTML = `
-          <td>${safeDate(m.date)}</td>
-          <td>${movementLabel(m.type)}</td>
-          <td>${d ? d.name : m.type === "other_out" ? m.note || "-" : "-"}</td>
-          <td>${p ? p.name : "-"}</td>
-          <td>${movementQtyText(m)}</td>
-          <td>${fmtMoney(m.amount)}</td>
-          <td>${movementSource(m.type)}</td>
-          <td>${movementActionButtons(m.id)}</td>
+          ${selectCell(g.key)}
+          <td>${safeDate(g.date)}</td>
+          <td>${movementLabel(g.type)}</td>
+          <td>${d ? escapeHtml(d.name) : escapeHtml(g.note || "-")}</td>
+          <td>${fmtMoney(g.amount)}</td>
+          <td>${movementSource(g.type)}</td>
+          <td>${groupActionButtons(g)}</td>
         `;
         el.dailyFlowBody.appendChild(tr);
       });
@@ -3726,13 +3903,105 @@
       renderReports();
     }
 
+    function selectedMovementIdsFromTable(tableId) {
+      const table = document.getElementById(tableId);
+      if (!table) return [];
+      const ids = new Set();
+      table.querySelectorAll("tbody .export-row-check:checked").forEach((check) => {
+        const row = check.closest("tr");
+        String(row?.dataset.movementEditIds || "").split(",").filter(Boolean).forEach((id) => ids.add(id));
+      });
+      return [...ids];
+    }
+
+    function deleteSelectedRows(tableId) {
+      const ids = selectedMovementIdsFromTable(tableId);
+      if (!ids.length) {
+        alert("O'chirish uchun qatorlarni belgilang.");
+        return;
+      }
+      if (!confirm(`${ids.length} ta ichki yozuvga tegishli tanlangan qatorlar o'chirilsinmi?`)) return;
+      state.movements = state.movements.filter((m) => !ids.includes(m.id));
+      requestStateSave();
+      renderAll();
+    }
+
+    function zeroAllStock() {
+      const sMap = stockMap();
+      const rows = state.products.map((p) => ({ product: p, pieces: Math.max(0, Number(sMap[p.id] || 0)) })).filter((row) => row.pieces > 0);
+      if (!rows.length) {
+        showNotice(el.stockEditNotice, "Sklad ostatkasi allaqachon 0.", "ok");
+        return;
+      }
+      if (!confirm("Skladdagi barcha joriy ostatka 0 qilinsinmi?")) return;
+      const date = todayIso();
+      const batchId = uid("batch");
+      rows.forEach(({ product, pieces }) => {
+        const bagQty = Math.floor(pieces / product.piecesPerBag);
+        const pieceQty = pieces % product.piecesPerBag;
+        const amounts = splitAmountsByPrices(bagQty, pieceQty, product.priceBag, product.pricePiece, calcAmountByPrices(bagQty, pieceQty, product.priceBag, product.pricePiece));
+        if (bagQty > 0) addMovement({ date, type: "adjust_out", productId: product.id, unit: "bag", qty: bagQty, amount: amounts.bagAmount, note: "Ostatka 0 qilindi", batchId });
+        if (pieceQty > 0) addMovement({ date, type: "adjust_out", productId: product.id, unit: "piece", qty: pieceQty, amount: amounts.pieceAmount, note: "Ostatka 0 qilindi", batchId });
+      });
+      showNotice(el.stockEditNotice, "Sklad ostatkasi 0 qilindi.", "ok");
+      renderAll();
+    }
+
     function exportTableToExcel(tableId, filename) {
       const table = document.getElementById(tableId);
       if (!table) return;
+      const selected = [...table.querySelectorAll("tbody .export-row-check:checked")].map((check) => check.closest("tr")).filter(Boolean);
+      const exportTable = table.cloneNode(true);
+      if (selected.length) {
+        const selectedKeys = new Set(selected.map((row) => row.querySelector(".export-row-check")?.dataset.exportRow));
+        exportTable.querySelectorAll("tbody tr").forEach((row) => {
+          const key = row.querySelector(".export-row-check")?.dataset.exportRow;
+          if (!selectedKeys.has(key)) row.remove();
+        });
+      }
+      const hasSelectableRows = Boolean(exportTable.querySelector(".export-row-check"));
+      if (hasSelectableRows) {
+        exportTable.querySelectorAll("thead tr").forEach((row) => {
+          row.querySelector("th:last-child")?.remove();
+          row.querySelector("th:first-child")?.remove();
+          const detailsHead = document.createElement("th");
+          detailsHead.textContent = "Tovarlar soni";
+          const amountHead = [...row.children].find((cell) => cell.textContent.trim() === "Summa");
+          row.insertBefore(detailsHead, amountHead || null);
+        });
+        exportTable.querySelectorAll("tbody tr").forEach((row) => {
+          const sourceRow = table.querySelector(`[data-movement-edit-ids="${row.dataset.movementEditIds || ""}"]`);
+          const details = sourceRow?.dataset.exportDetails || row.dataset.exportDetails || "";
+          row.querySelector("td:last-child")?.remove();
+          row.querySelector("td:first-child")?.remove();
+          const detailsCell = document.createElement("td");
+          detailsCell.textContent = details;
+          const cells = [...row.children];
+          const amountIndex = cells.findIndex((cell) => cell.textContent.includes("so'm"));
+          row.insertBefore(detailsCell, amountIndex >= 0 ? row.children[amountIndex] : null);
+        });
+      }
+      const title = document.querySelector(`[data-table="${tableId}"]`)?.dataset.file || filename || "hisobot";
+      const exportedAt = new Date().toLocaleString("uz-UZ");
       const html = `
         <html>
-          <head><meta charset="UTF-8"></head>
-          <body>${table.outerHTML}</body>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; color: #1d2d44; }
+              h2 { margin: 0 0 4px; color: #16355b; }
+              p { margin: 0 0 12px; color: #687a95; }
+              table { border-collapse: collapse; width: 100%; }
+              th { background: #dceeff; color: #17375f; font-weight: 700; }
+              th, td { border: 1px solid #b9cbe0; padding: 8px; vertical-align: top; }
+              tr:nth-child(even) td { background: #f7fbff; }
+            </style>
+          </head>
+          <body>
+            <h2>${escapeHtml(title)}</h2>
+            <p>Eksport vaqti: ${escapeHtml(exportedAt)}${selected.length ? ` | Tanlangan qatorlar: ${selected.length}` : ""}</p>
+            ${exportTable.outerHTML}
+          </body>
         </html>
       `;
       const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8;" });
@@ -3811,8 +4080,7 @@
         const btn = e.target.closest(".menu-item");
         if (!btn) return;
         const target = btn.dataset.target;
-        el.sections.forEach((s) => s.classList.toggle("active", s.id === target));
-        document.querySelectorAll(".menu-item").forEach((m) => m.classList.toggle("active", m.dataset.target === target));
+        activateSection(target);
       });
 
       [
@@ -3832,6 +4100,14 @@
           renderAll();
         });
       });
+
+      if (el.driverOutDriverSearch) {
+        el.driverOutDriverSearch.addEventListener("input", () => {
+          state.driverOutDriverSearch = el.driverOutDriverSearch.value || "";
+          state.pagination.driverOut = 1;
+          renderDriverOut();
+        });
+      }
 
       [
         { node: el.adminName, key: "name" },
@@ -3870,6 +4146,50 @@
 
       el.movementEditForm.addEventListener("submit", (e) => {
         e.preventDefault();
+        if (el.movementEditForm.dataset.mode === "group") {
+          const ids = String(el.movementEditForm.dataset.groupIds || "").split(",").filter(Boolean);
+          const oldItems = ids.map((id) => state.movements.find((m) => m.id === id)).filter(Boolean);
+          if (!oldItems.length) {
+            showNotice(el.movementEditNotice, "Tahrirlanadigan qator topilmadi.", "bad");
+            return;
+          }
+          const date = el.movementEditDate.value;
+          const type = oldItems[0].type;
+          const driverId = movementNeedsDriver(type) ? el.movementEditDriver.value : null;
+          const note = el.movementEditNote.value.trim();
+          if (!date || (movementNeedsDriver(type) && !driverId)) {
+            showNotice(el.movementEditNotice, "Sana va haydovchini to'g'ri tanlang.", "bad");
+            return;
+          }
+          const editedItems = [];
+          for (const row of el.movementEditGroupBody.querySelectorAll("tr")) {
+            const old = state.movements.find((m) => m.id === row.dataset.groupMovementId);
+            const productId = row.querySelector('[data-group-field="product"]')?.value || "";
+            const unit = row.querySelector('[data-group-field="unit"]')?.value === "bag" ? "bag" : "piece";
+            const qty = toInt(row.querySelector('[data-group-field="qty"]')?.value);
+            const amount = Number(row.querySelector('[data-group-field="amount"]')?.value);
+            const product = getProduct(productId);
+            if (!old || !product || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(amount) || amount < 0) {
+              showNotice(el.movementEditNotice, "Guruhdagi mahsulot, miqdor va summalarni to'g'ri kiriting.", "bad");
+              return;
+            }
+            editedItems.push({ ...old, date, productId, unit, qty: Math.max(1, qty), pieces: toPieces(product, Math.max(1, qty), unit), amount: Math.max(0, amount), driverId, note });
+          }
+          const projectedMap = stockMap();
+          oldItems.forEach((m) => applyMovementToStockMap(projectedMap, m, -1));
+          editedItems.forEach((m) => applyMovementToStockMap(projectedMap, m, 1));
+          const negativeProductId = findNegativeStockProductId(projectedMap);
+          if (negativeProductId) {
+            const badProduct = getProduct(negativeProductId);
+            showNotice(el.movementEditNotice, `Bu tahrir sklad qoldig'ini manfiy qiladi: ${badProduct ? badProduct.name : negativeProductId}`, "bad");
+            return;
+          }
+          editedItems.forEach((edited) => Object.assign(state.movements.find((m) => m.id === edited.id), edited));
+          requestStateSave();
+          closeMovementEditModal();
+          renderAll();
+          return;
+        }
         const movementId = el.movementEditId.value;
         const movement = state.movements.find((m) => m.id === movementId);
         if (!movement) {
@@ -4007,6 +4327,14 @@
         btn.addEventListener("click", () => exportTableToExcel(btn.dataset.table, btn.dataset.file));
       });
 
+      document.querySelectorAll(".delete-selected-btn").forEach((btn) => {
+        btn.addEventListener("click", () => deleteSelectedRows(btn.dataset.table));
+      });
+
+      if (el.zeroStockBtn) {
+        el.zeroStockBtn.addEventListener("click", zeroAllStock);
+      }
+
       document.addEventListener("click", (e) => {
         const pager = e.target.closest("[data-pager-key]");
         if (pager) {
@@ -4016,9 +4344,29 @@
           renderAll();
           return;
         }
+        const movementGroupEditBtn = e.target.closest(".movement-group-edit-btn");
+        if (movementGroupEditBtn) {
+          openMovementGroupEditModal(movementGroupEditBtn.dataset.movementEditIds);
+          return;
+        }
+        const movementGroupRow = e.target.closest(".movement-group-row");
+        if (movementGroupRow && !e.target.closest("button, input, select, a")) {
+          openMovementGroupEditModal(movementGroupRow.dataset.movementEditIds);
+          return;
+        }
         const movementEditBtn = e.target.closest(".movement-edit-btn");
         if (movementEditBtn) {
           openMovementEditModal(movementEditBtn.dataset.movementEditId);
+          return;
+        }
+        const movementGroupDeleteBtn = e.target.closest(".movement-group-delete-btn");
+        if (movementGroupDeleteBtn) {
+          const ids = String(movementGroupDeleteBtn.dataset.movementDeleteIds || "").split(",").filter(Boolean);
+          if (!ids.length) return;
+          if (!confirm("Ushbu qatordagi barcha yozuvlar o'chirilsinmi? Sklad qoldig'i avtomatik qayta hisoblanadi.")) return;
+          state.movements = state.movements.filter((m) => !ids.includes(m.id));
+          requestStateSave();
+          renderAll();
           return;
         }
         const movementDeleteBtn = e.target.closest(".movement-delete-btn");
