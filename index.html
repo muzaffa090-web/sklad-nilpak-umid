@@ -1,0 +1,1904 @@
+﻿<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1C Sklad Doctor</title>
+  <style>
+    :root {
+      --bg: #eef3fb;
+      --panel: #ffffff;
+      --text: #1d2d44;
+      --muted: #687a95;
+      --line: #dbe5f4;
+      --accent: #1398e7;
+      --accent-soft: #e7f6ff;
+      --good: #1ea968;
+      --warn: #f4ab2a;
+      --bad: #df5454;
+      --side: #1f2b45;
+      --side-soft: #2c3e63;
+      --shadow: 0 10px 30px rgba(10, 30, 58, 0.12);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Manrope", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 0 0, #dbe7ff 0, transparent 35%),
+        radial-gradient(circle at 100% 0, #d6f1ff 0, transparent 33%),
+        var(--bg);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .login-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .login-card {
+      width: min(430px, 95vw);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 26px;
+    }
+
+    .login-card h1 {
+      margin: 0 0 8px;
+      color: #173459;
+      font-size: 1.8rem;
+    }
+
+    .login-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.45;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 11px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 0.89rem;
+    }
+
+    .field input,
+    .field select {
+      border: 1px solid #d4deef;
+      border-radius: 10px;
+      padding: 10px 11px;
+      background: #fbfdff;
+      font: inherit;
+      color: var(--text);
+    }
+
+    .field input:focus,
+    .field select:focus {
+      outline: 2px solid #bde6ff;
+      border-color: #95d8ff;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 13px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      transition: 0.18s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(105deg, #0f8fdd, #24beff);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn-soft {
+      background: #f3f8ff;
+      color: #1f385a;
+      border: 1px solid #d3e3f7;
+    }
+
+    .btn-soft:hover {
+      background: #e9f3ff;
+    }
+
+    .btn-outline {
+      background: #fff;
+      border: 1px solid #d6e3f6;
+      color: #1f3658;
+    }
+
+    .btn-outline:hover {
+      background: #f6fbff;
+    }
+
+    .btn-danger {
+      background: #fff2f2;
+      border: 1px solid #f0b5b5;
+      color: #a03131;
+    }
+
+    .btn-danger:hover {
+      background: #ffe8e8;
+    }
+
+    .error-text {
+      color: var(--bad);
+      min-height: 18px;
+      margin: 9px 0 0;
+      font-size: 0.9rem;
+    }
+
+    .hint {
+      margin-top: 12px;
+      border-radius: 11px;
+      border: 1px dashed #b8def9;
+      background: #f3faff;
+      padding: 10px 11px;
+      font-size: 0.87rem;
+      color: #34587b;
+    }
+
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 272px;
+      background: linear-gradient(180deg, #1f2b45, #1f3660 70%, #1e467b);
+      color: #d4e5ff;
+      padding: 15px 12px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+
+    .brand {
+      padding: 11px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.07);
+      margin-bottom: 14px;
+    }
+
+    .brand strong {
+      display: block;
+      color: #fff;
+      font-size: 1.06rem;
+      margin-bottom: 3px;
+    }
+
+    .brand small {
+      color: #b8cbef;
+      font-size: 0.8rem;
+    }
+
+    .menu {
+      display: grid;
+      gap: 6px;
+    }
+
+    .menu-item {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 11px;
+      background: transparent;
+      color: #d9e8ff;
+      font: inherit;
+      cursor: pointer;
+      transition: 0.16s ease;
+    }
+
+    .menu-item:hover {
+      background: var(--side-soft);
+    }
+
+    .menu-item.active {
+      background: linear-gradient(105deg, #1495e3, #2bc3ff);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.84);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 11px;
+      padding: 14px 18px;
+    }
+
+    .topbar h1 {
+      margin: 0 0 3px;
+      color: #17375f;
+      font-size: 1.17rem;
+    }
+
+    .topbar small {
+      color: var(--muted);
+    }
+
+    .profile-chip-wrap {
+      position: relative;
+    }
+
+    .profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: #f4f9ff;
+      border: 1px solid #d7e7f8;
+      border-radius: 11px;
+      padding: 6px 9px;
+      cursor: pointer;
+    }
+
+    .profile-chip-btn {
+      font: inherit;
+      color: inherit;
+      text-align: left;
+    }
+
+    .profile-dropdown {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      width: 280px;
+      background: #fff;
+      border: 1px solid #dbe5f4;
+      border-radius: 12px;
+      box-shadow: 0 14px 32px rgba(10, 30, 58, 0.15);
+      padding: 12px;
+      z-index: 30;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(105deg, #108fdf, #33c5ff);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      flex-shrink: 0;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar svg {
+      width: 70%;
+      height: 70%;
+      fill: #fff;
+      opacity: 0.95;
+    }
+
+    .avatar-lg {
+      width: 88px;
+      height: 88px;
+    }
+
+    .profile-chip strong {
+      display: block;
+      font-size: 0.9rem;
+      color: #193c63;
+    }
+
+    .profile-chip span {
+      color: var(--muted);
+      font-size: 0.77rem;
+    }
+
+    .content {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+      animation: fadeIn 0.18s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.32rem;
+      color: #16355b;
+    }
+
+    .actions {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    #globalFilterCard {
+      position: relative;
+      overflow: visible;
+    }
+
+    .filter-actions {
+      align-items: center;
+    }
+
+    .filter-wrap {
+      position: relative;
+    }
+
+    .filter-popover {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: 20;
+      width: 260px;
+      border: 1px solid #d5e2f3;
+      border-radius: 12px;
+      background: #f6f8fb;
+      box-shadow: 0 14px 32px rgba(22, 45, 79, 0.18);
+      padding: 8px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 13px;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      color: #1b3d67;
+      font-size: 1.02rem;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid-2 {
+      grid-template-columns: 1fr;
+    }
+
+    .kpi-grid {
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      margin-bottom: 12px;
+    }
+
+    .kpi strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #15375d;
+      font-size: 1.14rem;
+    }
+
+    .kpi span {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .range-controls {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .range-controls input {
+      border-radius: 9px;
+      border: 1px solid #d4e1f2;
+      padding: 8px 9px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .preset {
+      border: 1px solid #d3e1f3;
+      border-radius: 9px;
+      background: #f3f8ff;
+      padding: 8px 10px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .preset.active {
+      background: #def2ff;
+      border-color: #9fdaff;
+      color: #0f699f;
+      font-weight: 700;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      border: 1px solid #d5e1f2;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #f6faff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: #21456d;
+    }
+
+    .chip.active {
+      background: #e0f3ff;
+      border-color: #9fd7fb;
+      color: #0e6a9f;
+      font-weight: 700;
+    }
+
+    .filter-preset-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #d6dce8;
+      background: #e9edf4;
+      color: #4b5a70;
+      font: inherit;
+      font-size: 0.9rem;
+      padding: 8px 10px;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    .filter-preset-btn.active {
+      background: #0f8da7;
+      color: #fff;
+      border-color: #0f8da7;
+      font-weight: 700;
+    }
+
+    .entry-input,
+    .product-edit-input {
+      width: 100%;
+      border: 1px solid #d3e2f4;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font: inherit;
+      min-width: 90px;
+      background: #fff;
+    }
+
+    .entry-input:focus,
+    .product-edit-input:focus {
+      outline: 2px solid #c6eaff;
+      border-color: #9fd6fb;
+    }
+
+    .pager {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .pager-info {
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .pager-btn {
+      border: 1px solid #d0dff2;
+      background: #f5f9ff;
+      color: #1f4169;
+      border-radius: 8px;
+      padding: 5px 9px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .pager-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .forms-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(170px, 1fr));
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .notice {
+      margin-top: 9px;
+      min-height: 18px;
+      font-size: 0.88rem;
+    }
+
+    .notice.ok {
+      color: var(--good);
+    }
+
+    .notice.bad {
+      color: var(--bad);
+    }
+
+    .inline-text {
+      margin: 0 0 9px;
+      color: #4b6585;
+      font-size: 0.88rem;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 680px;
+    }
+
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e7eef9;
+      text-align: left;
+      font-size: 0.9rem;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f8fbff;
+      color: #34557b;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tfoot th {
+      border-top: 2px solid #d5e2f3;
+      background: #eef7ff;
+      color: #16355b;
+      font-weight: 800;
+      position: static;
+    }
+
+    .empty {
+      text-align: center;
+      color: #6b7e98;
+      font-style: italic;
+      padding: 15px;
+    }
+
+    .tag {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .tag.in {
+      background: #e8fbf0;
+      color: #187548;
+      border: 1px solid #b7e9cc;
+    }
+
+    .tag.out {
+      background: #fff3e5;
+      color: #9c5c0b;
+      border: 1px solid #f3d4ac;
+    }
+
+    .tag.edit {
+      background: #ebf4ff;
+      color: #1a588f;
+      border: 1px solid #c9def8;
+    }
+
+    .link-btn {
+      border: 0;
+      background: transparent;
+      color: #0f75b4;
+      text-decoration: underline;
+      cursor: pointer;
+      padding: 0;
+      font: inherit;
+    }
+
+    .driver-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 220px;
+    }
+
+    .driver-name-cell .link-btn {
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .admin-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .admin-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .upload-hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .driver-profile {
+      border: 1px solid #dce8f8;
+      border-radius: 12px;
+      background: #fbfdff;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .profile-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px dashed #e5edf9;
+      padding-bottom: 7px;
+    }
+
+    .profile-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .profile-row small {
+      color: var(--muted);
+    }
+
+    .profile-row strong {
+      color: #15385f;
+      text-align: right;
+    }
+
+    .search-inline {
+      margin-bottom: 10px;
+    }
+
+    .search-inline input {
+      width: min(380px, 100%);
+    }
+
+    .select-cell {
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .btn-sm {
+      padding: 6px 9px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: rgba(14, 24, 38, 0.46);
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .modal-card {
+      width: min(760px, 100%);
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+      background: #fff;
+      border: 1px solid #d7e5f8;
+      border-radius: 14px;
+      box-shadow: 0 18px 42px rgba(10, 27, 45, 0.28);
+      padding: 14px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      color: #173a61;
+      font-size: 1.05rem;
+    }
+
+    .modal-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+
+    .modal-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .avatar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    @media (max-width: 1200px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+
+      .menu {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+      }
+
+      .topbar {
+        position: static;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .menu {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+
+        .kpi-grid,
+        .forms-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .filter-actions,
+        .filter-wrap {
+          width: 100%;
+        }
+
+        .filter-popover {
+          left: 0;
+          right: auto;
+          width: min(260px, calc(100vw - 48px));
+        }
+
+        .profile-dropdown {
+          width: min(280px, calc(100vw - 40px));
+        }
+
+        .modal-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+  </style>
+</head>
+<body>
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <h1>1C Sklad Doctor</h1>
+      <p>Sklad kirim-chiqim, haydovchilar tovari, vozvrat va kunlik hisobotlar paneli.</p>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginUsername">Login</label>
+          <input id="loginUsername" autocomplete="username" placeholder="Login kiriting">
+        </div>
+        <div class="field">
+          <label for="loginPassword">Parol</label>
+          <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Parol kiriting">
+        </div>
+        <button class="btn btn-primary" type="submit">Kirish</button>
+        <p id="loginError" class="error-text"></p>
+      </form>
+      <div class="hint">Login: <strong>Umid</strong> | Parol: <strong>5555</strong></div>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <strong>Sklad Doctor Panel</strong>
+        <small>1C va Sales Doctor uslubida</small>
+      </div>
+      <nav class="menu" id="menuList">
+        <button type="button" class="menu-item active" data-target="dashboardSection">Dashboard</button>
+        <button type="button" class="menu-item" data-target="driverOutSection">Haydovchilar Tovari</button>
+        <button type="button" class="menu-item" data-target="otherOutSection">Boshqa Chiqimlar</button>
+        <button type="button" class="menu-item" data-target="takenGoodsSection">Olingan Tovarlar</button>
+        <button type="button" class="menu-item" data-target="returnsSection">Vozvratlar</button>
+        <button type="button" class="menu-item" data-target="incomingSection">Skladga Kirim</button>
+        <button type="button" class="menu-item" data-target="incomingHistorySection">Kirimlar Tarixi</button>
+        <button type="button" class="menu-item" data-target="dailyFlowSection">Jami Kunlik Chiqim</button>
+        <button type="button" class="menu-item" data-target="returnsHistorySection">Vozvratlar Tarixi</button>
+        <button type="button" class="menu-item" data-target="driversSection">Haydovchilar</button>
+        <button type="button" class="menu-item" data-target="productsSection">Mahsulotlar</button>
+        <button type="button" class="menu-item" data-target="stockSection">Sklad</button>
+        <button type="button" class="menu-item" data-target="reportsSection">Hisobotlar</button>
+        <button type="button" class="menu-item" data-target="initialStockSection">Boshlang'ich Ostatka</button>
+        <button type="button" class="menu-item" data-target="profileSection">Profil</button>
+      </nav>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div>
+          <h1>Sklad Hisob-kitob Tizimi</h1>
+          <small id="todayLabel"></small>
+        </div>
+        <div class="actions">
+          <div class="profile-chip-wrap">
+            <button id="profileChip" class="profile-chip profile-chip-btn" type="button">
+              <div id="topbarAvatar" class="avatar"></div>
+              <div>
+                <strong id="topbarName">Umid</strong>
+                <span id="topbarRole">Admin</span>
+              </div>
+            </button>
+            <div id="profileDropdown" class="profile-dropdown hidden">
+              <div class="admin-head">
+                <div id="dropdownAvatar" class="avatar avatar-lg"></div>
+                <div>
+                  <strong id="dropdownName">Umid</strong>
+                  <div id="dropdownRole" class="inline-text" style="margin:4px 0 0;">Admin</div>
+                </div>
+              </div>
+              <div class="driver-profile" style="margin-top:10px;">
+                <div class="profile-row"><small>Email</small><strong id="dropdownEmail">admin@example.com</strong></div>
+                <div class="profile-row"><small>Login</small><strong id="dropdownLogin">Umid</strong></div>
+                <div class="profile-row"><small>Status</small><strong id="dropdownStatus">Faol</strong></div>
+              </div>
+            </div>
+          </div>
+          <button id="logoutBtn" class="btn btn-soft" type="button">Chiqish</button>
+        </div>
+      </header>
+
+      <main class="content">
+        <article class="card" id="globalFilterCard">
+          <div class="section-head">
+            <h2>Umumiy Filtr</h2>
+            <div class="actions filter-actions">
+              <div class="filter-wrap">
+                <button id="toggleFilterPanel" class="btn btn-outline" type="button">Oraliq tanlash</button>
+                <div id="globalFilterPanel" class="filter-popover hidden">
+                  <button class="filter-preset-btn active" data-filter-preset="today" type="button">Bugun</button>
+                  <button class="filter-preset-btn" data-filter-preset="yesterday" type="button">Kecha</button>
+                  <button class="filter-preset-btn" data-filter-preset="last7" type="button">Oxirgi 7 kun</button>
+                  <button class="filter-preset-btn" data-filter-preset="last30" type="button">Oxirgi 30 kun</button>
+                  <button class="filter-preset-btn" data-filter-preset="prevMonth" type="button">Oldingi oy</button>
+                  <button class="filter-preset-btn" data-filter-preset="custom" type="button">Sana tanlash</button>
+                  <div class="range-controls" style="margin-top:8px;">
+                    <div class="field" style="margin:0;">
+                      <label for="globalFrom">dan</label>
+                      <input id="globalFrom" type="date">
+                    </div>
+                    <div class="field" style="margin:0;">
+                      <label for="globalTo">gacha</label>
+                      <input id="globalTo" type="date">
+                    </div>
+                  </div>
+                  <div class="actions" style="margin-top:8px;">
+                    <button id="cancelGlobalFilter" class="btn btn-soft" type="button">Bekor qilish</button>
+                  </div>
+                </div>
+              </div>
+              <button id="applyGlobalFilter" class="btn btn-primary" type="button">Filtr</button>
+              <button id="clearGlobalFilter" class="btn btn-outline" type="button">Filtrdan chiqarish</button>
+            </div>
+          </div>
+          <p id="globalFilterText" class="inline-text" style="margin:0 0 10px;">Filtr: o'chirilgan</p>
+          <div class="range-controls">
+            <div class="field" style="margin:0;">
+              <label for="stockAsOfDate">Ostatka sanasi</label>
+              <input id="stockAsOfDate" type="date">
+            </div>
+            <button id="applyStockAsOfDate" class="btn btn-outline" type="button">Ostatkani ko'rish</button>
+          </div>
+        </article>
+
+        <section id="dashboardSection" class="section active">
+          <div class="section-head">
+            <h2>Dashboard</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="dashboardProductsTable" data-file="dashboard-mahsulotlar">Mahsulotlar eksport</button>
+              <button class="btn btn-outline export-btn" data-table="dashboardDriversTable" data-file="dashboard-haydovchilar">Haydovchilar eksport</button>
+              <button id="resetAllDataBtn" class="btn btn-danger" type="button">Hammasini 0 qilish</button>
+            </div>
+          </div>
+
+          <div class="grid kpi-grid">
+            <article class="card kpi">
+              <h3>Eng ko'p kirim mahsulot</h3>
+              <strong id="kpiTopInName">-</strong>
+              <span id="kpiTopInQty">0 qop 0 dona</span>
+            </article>
+            <article class="card kpi">
+              <h3>Eng ko'p chiqim mahsulot</h3>
+              <strong id="kpiTopOutName">-</strong>
+              <span id="kpiTopOutQty">0 qop 0 dona</span>
+            </article>
+            <article class="card kpi">
+              <h3>Bugungi chiqim summasi</h3>
+              <strong id="kpiTodayOutAmount">0 so'm</strong>
+              <span>Haydovchilar olgan tovar</span>
+            </article>
+            <article class="card kpi">
+              <h3>Sklad ostatka summasi</h3>
+              <strong id="kpiStockAmount">0 so'm</strong>
+              <span id="kpiStockQty">0 mahsulot | 0 dona</span>
+            </article>
+          </div>
+
+          <div class="grid grid-2">
+            <article class="card">
+              <h3>Mahsulotlar Holati</h3>
+              <p class="inline-text" id="dashRangeText">Oraliq: Oxirgi 7 kun</p>
+              <div class="table-wrap">
+                <table id="dashboardProductsTable">
+                  <thead>
+                    <tr>
+                      <th>Mahsulot</th>
+                      <th>Kirim</th>
+                      <th>Chiqim</th>
+                      <th>Vozvrat</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardProductsBody"></tbody>
+                </table>
+              </div>
+            </article>
+            <article class="card">
+              <h3>Haydovchilar Summasi</h3>
+              <div class="table-wrap">
+                <table id="dashboardDriversTable">
+                  <thead>
+                    <tr>
+                      <th>Haydovchi</th>
+                      <th>Bugungi olgan</th>
+                      <th>Jami olgan</th>
+                      <th>Oxirgi olgan sana</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardDriversBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="incomingSection" class="section">
+          <div class="section-head">
+            <h2>Skladga Kirim</h2>
+          </div>
+
+          <article class="card">
+            <h3>Kirim qo'shish</h3>
+            <p class="inline-text">Kirim kiritishda faqat mahsulot qatori va narx maydonlari ko'rinadi.</p>
+            <form id="incomingForm">
+              <div class="forms-grid">
+                <div class="field">
+                  <label for="incomingDate">Sana</label>
+                  <input id="incomingDate" type="date">
+                </div>
+                <div class="field">
+                  <label>Izoh</label>
+                  <input id="incomingComment" placeholder="Ixtiyoriy">
+                </div>
+              </div>
+              <div class="search-inline">
+                <input id="incomingProductSearch" placeholder="Mahsulot qidirish...">
+              </div>
+              <div class="table-wrap">
+                <table id="incomingEntryTable">
+                  <thead>
+                    <tr>
+                      <th>Mahsulot</th>
+                      <th>Qop narxi</th>
+                      <th>Dona narxi</th>
+                      <th>Qop soni</th>
+                      <th>Dona soni</th>
+                      <th>Summa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="incomingEntryBody"></tbody>
+                </table>
+              </div>
+              <p id="incomingEntryTotal" class="inline-text">Jami summa: 0 so'm</p>
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">Kirimni saqlash</button>
+                <button class="btn btn-soft clear-entry-btn" data-entry-type="incoming" type="button">Qatorlarni tozalash</button>
+              </div>
+              <p id="incomingNotice" class="notice"></p>
+            </form>
+          </article>
+        </section>
+
+        <section id="incomingHistorySection" class="section">
+          <div class="section-head">
+            <h2>Kirimlar Tarixi</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="incomingTable" data-file="skladga-kirim">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="incomingTable" type="button">Tanlanganlarni o'chirish</button>
+            </div>
+          </div>
+          <article class="card">
+            <h3>Skladga kirgan tovarlar ro'yxati</h3>
+            <div class="table-wrap">
+              <table id="incomingTable">
+                <thead>
+                  <tr>
+                    <th><input class="export-row-check select-all-check" data-select-all type="checkbox" aria-label="Barcha qatorlarni tanlash"></th>
+                    <th>Sana</th>
+                    <th>Holat</th>
+                    <th>Summa</th>
+                    <th>Izoh</th>
+                    <th>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody id="incomingBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="stockSection" class="section">
+          <div class="section-head">
+            <h2>Sklad</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="stockTable" data-file="sklad-ostatka">Excelga eksport</button>
+              <button class="btn btn-outline export-btn" data-table="stockEditTable" data-file="sklad-tahrir-jurnali">Tahrir jurnalini eksport</button>
+              <button id="zeroStockBtn" class="btn btn-danger" type="button">Ostatkani 0 qilish</button>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <article class="card">
+              <h3>Sklad Ostatkasini Tahrirlash</h3>
+              <p class="inline-text">Mahsulotlar ro'yxat ko'rinishida chiqadi. Narx, qop soni, dona soni va summani shu yerda yozing.</p>
+              <form id="stockEditForm">
+                <div class="forms-grid">
+                  <div class="field">
+                    <label for="stockEditDate">Sana</label>
+                    <input id="stockEditDate" type="date">
+                  </div>
+                  <div class="field">
+                    <label for="stockEditOperation">Amal</label>
+                    <select id="stockEditOperation">
+                      <option value="add">Qoldiq qo'shish</option>
+                      <option value="subtract">Qoldiq kamaytirish</option>
+                      <option value="reset">Qoldiqni 0 qilish</option>
+                    </select>
+                  </div>
+                  <div class="field full">
+                    <label for="stockEditNote">Izoh</label>
+                    <input id="stockEditNote" placeholder="Masalan: yaroqsiz mahsulot">
+                  </div>
+                </div>
+                <div class="search-inline">
+                  <input id="stockEditProductSearch" placeholder="Mahsulot qidirish...">
+                </div>
+                <div class="table-wrap">
+                  <table id="stockEditEntryTable">
+                    <thead>
+                      <tr>
+                        <th>Mahsulot</th>
+                        <th>Qop narxi</th>
+                        <th>Dona narxi</th>
+                        <th>Qop soni</th>
+                        <th>Dona soni</th>
+                        <th>Summa</th>
+                      </tr>
+                    </thead>
+                    <tbody id="stockEditEntryBody"></tbody>
+                  </table>
+                </div>
+                <p id="stockEditEntryTotal" class="inline-text">Jami summa: 0 so'm</p>
+                <div class="actions">
+                  <button class="btn btn-primary" type="submit">Tahrirni saqlash</button>
+                  <button class="btn btn-soft clear-entry-btn" data-entry-type="stockEdit" type="button">Qatorlarni tozalash</button>
+                </div>
+                <p id="stockEditNotice" class="notice"></p>
+              </form>
+            </article>
+            <article class="card">
+              <h3>Joriy Sklad Ostatkasi</h3>
+              <div class="search-inline">
+                <input id="stockProductSearch" placeholder="Skladdan mahsulot qidirish...">
+              </div>
+              <div class="table-wrap">
+                <table id="stockTable">
+                  <thead>
+                    <tr>
+                      <th>Mahsulot</th>
+                      <th>Qop narxi</th>
+                      <th>Dona narxi</th>
+                      <th>Qoldiq</th>
+                      <th>Qoldiq summasi</th>
+                      <th>Tahrir</th>
+                    </tr>
+                  </thead>
+                  <tbody id="stockBody"></tbody>
+                  <tfoot id="stockFoot"></tfoot>
+                </table>
+              </div>
+            </article>
+          </div>
+
+          <article class="card" style="margin-top:12px;">
+            <h3>Sklad Tahrir Jurnali</h3>
+            <div class="table-wrap">
+              <table id="stockEditTable">
+                <thead>
+                  <tr>
+                    <th>Sana</th>
+                    <th>Amal</th>
+                    <th>Mahsulot</th>
+                    <th>Miqdor</th>
+                    <th>Summa</th>
+                    <th>Izoh</th>
+                    <th>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody id="stockEditBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="productsSection" class="section">
+          <div class="section-head">
+            <h2>Mahsulotlar</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="productsTable" data-file="mahsulotlar">Excelga eksport</button>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <article class="card">
+              <h3>Mahsulot Qo'shish</h3>
+              <p class="inline-text">Suratdan kiritilgan katalog yuklangan. Yangi mahsulot ham qo'shish mumkin.</p>
+              <form id="productForm">
+                <div class="forms-grid">
+                  <div class="field full">
+                    <label for="productName">Mahsulot nomi</label>
+                    <input id="productName" placeholder="Masalan: Un 50kg">
+                  </div>
+                  <div class="field">
+                    <label for="piecesPerBag">1 qop ichidagi dona</label>
+                    <input id="piecesPerBag" type="number" min="1" step="1" placeholder="Masalan: 50">
+                  </div>
+                  <div class="field">
+                    <label for="priceBag">Qop narxi (so'm)</label>
+                    <input id="priceBag" type="number" min="0" step="1000" placeholder="Masalan: 330000">
+                  </div>
+                  <div class="field full">
+                    <label for="pricePiece">Dona narxi (so'm)</label>
+                    <input id="pricePiece" type="number" min="0" step="1" placeholder="Masalan: 7000">
+                  </div>
+                </div>
+                <button class="btn btn-primary" type="submit">Mahsulot qo'shish</button>
+                <p id="productNotice" class="notice"></p>
+              </form>
+            </article>
+
+            <article class="card">
+              <h3>Mahsulotni O'chirish</h3>
+              <p class="inline-text">Tanlangan mahsulot ro'yxatdan o'chiriladi (harakatlari ham o'chadi).</p>
+              <form id="deleteProductForm">
+                <div class="field">
+                  <label for="deleteProductSelect">Mahsulot tanlang</label>
+                  <select id="deleteProductSelect"></select>
+                </div>
+                <button class="btn btn-danger" type="submit">Mahsulotni o'chirish</button>
+                <p id="deleteProductNotice" class="notice"></p>
+              </form>
+            </article>
+          </div>
+
+          <article class="card" style="margin-top:12px;">
+            <h3>Mahsulotlar ro'yxati</h3>
+            <div class="search-inline">
+              <input id="productsSearch" placeholder="Mahsulot qidirish...">
+            </div>
+            <div class="table-wrap">
+              <table id="productsTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Nomi</th>
+                    <th>1 qop = dona</th>
+                    <th>Qop narxi</th>
+                    <th>Dona narxi</th>
+                    <th>Qoldiq</th>
+                    <th>Qoldiq summasi</th>
+                    <th>Tahrir</th>
+                  </tr>
+                </thead>
+                <tbody id="productsBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="driversSection" class="section">
+          <div class="section-head">
+            <h2>Haydovchilar</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="driversTable" data-file="haydovchilar">Excelga eksport</button>
+            </div>
+          </div>
+
+          <div class="grid grid-2">
+            <article class="card">
+              <h3>Haydovchi Qo'shish</h3>
+              <form id="driverForm">
+                <div class="forms-grid">
+                  <div class="field full">
+                    <label for="driverName">F.I.O</label>
+                    <input id="driverName" placeholder="Masalan: Jasur T.">
+                  </div>
+                  <div class="field">
+                    <label for="driverPhone">Telefon</label>
+                    <input id="driverPhone" placeholder="+998 ..">
+                  </div>
+                  <div class="field">
+                    <label for="driverVehicle">Transport</label>
+                    <input id="driverVehicle" placeholder="ISUZU, Damas...">
+                  </div>
+                  <div class="field">
+                    <label for="driverPhoto">Rasm (ixtiyoriy)</label>
+                    <input id="driverPhoto" type="file" accept="image/*">
+                  </div>
+                </div>
+                <button class="btn btn-primary" type="submit">Haydovchi qo'shish</button>
+                <p id="driverNotice" class="notice"></p>
+              </form>
+            </article>
+
+            <article class="card">
+              <h3>Haydovchi Profili</h3>
+              <div id="driverProfile" class="driver-profile"></div>
+            </article>
+          </div>
+
+          <article class="card" style="margin-top:12px;">
+            <h3>Haydovchilar ro'yxati</h3>
+            <div class="table-wrap">
+              <table id="driversTable">
+                <thead>
+                  <tr>
+                    <th>Haydovchi</th>
+                    <th>Telefon</th>
+                    <th>Transport</th>
+                    <th>Bugungi olgan summa</th>
+                    <th>Jami olgan summa</th>
+                    <th>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody id="driversBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="driverOutSection" class="section">
+          <div class="section-head">
+            <h2>Haydovchilar Tovari</h2>
+          </div>
+
+          <article class="card">
+            <h3>Haydovchiga Tovar Berish</h3>
+            <p class="inline-text">Chiqim kiritishda faqat kerakli maydonlar ko'rinadi, narxlar qo'lda yoziladi.</p>
+            <form id="driverOutForm">
+              <div class="forms-grid">
+                <div class="field">
+                  <label for="driverOutDate">Sana</label>
+                  <input id="driverOutDate" type="date">
+                </div>
+                <div class="field">
+                  <label for="driverOutDriver">Haydovchi</label>
+                  <select id="driverOutDriver"></select>
+                </div>
+                <div class="field">
+                  <label>Izoh</label>
+                  <input id="driverOutComment" placeholder="Ixtiyoriy">
+                </div>
+              </div>
+              <div class="search-inline">
+                <input id="driverOutProductSearch" placeholder="Mahsulot qidirish...">
+              </div>
+              <div class="table-wrap">
+                <table id="driverOutEntryTable">
+                  <thead>
+                    <tr>
+                      <th>Mahsulot</th>
+                      <th>Qop narxi</th>
+                      <th>Dona narxi</th>
+                      <th>Qop soni</th>
+                      <th>Dona soni</th>
+                      <th>Summa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="driverOutEntryBody"></tbody>
+                </table>
+              </div>
+              <p id="driverOutEntryTotal" class="inline-text">Jami summa: 0 so'm</p>
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">Chiqimni saqlash</button>
+                <button class="btn btn-soft clear-entry-btn" data-entry-type="driverOut" type="button">Qatorlarni tozalash</button>
+              </div>
+              <p id="driverOutNotice" class="notice"></p>
+            </form>
+          </article>
+        </section>
+
+        <section id="takenGoodsSection" class="section">
+          <div class="section-head">
+            <h2>Olingan Tovarlar</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="driverOutTable" data-file="haydovchilar-tovari">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="driverOutTable" type="button">Tanlanganlarni o'chirish</button>
+            </div>
+          </div>
+          <article class="card">
+            <h3>Haydovchi olgan tovarlar</h3>
+            <div class="search-inline">
+              <input id="driverOutDriverSearch" placeholder="Haydovchi nomi bo'yicha qidirish...">
+            </div>
+            <div class="table-wrap">
+              <table id="driverOutTable">
+                <thead>
+                  <tr>
+                    <th><input class="export-row-check select-all-check" data-select-all type="checkbox" aria-label="Barcha qatorlarni tanlash"></th>
+                    <th>Sana</th>
+                    <th>Holat</th>
+                    <th>Haydovchi</th>
+                    <th>Summa</th>
+                    <th>Izoh</th>
+                    <th>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody id="driverOutBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="returnsSection" class="section">
+          <div class="section-head">
+            <h2>Vozvratlar</h2>
+          </div>
+
+          <article class="card">
+            <h3>Haydovchidan Vozvrat Qabul Qilish</h3>
+            <p class="inline-text">Chiqimdagi kabi son va narx yoziladi, summa avtomatik hisoblanadi va tahrirlanadi.</p>
+            <form id="returnForm">
+              <div class="forms-grid">
+                <div class="field">
+                  <label for="returnDate">Sana</label>
+                  <input id="returnDate" type="date">
+                </div>
+                <div class="field">
+                  <label for="returnDriver">Haydovchi</label>
+                  <select id="returnDriver"></select>
+                </div>
+                <div class="field">
+                  <label>Izoh</label>
+                  <input id="returnComment" placeholder="Ixtiyoriy">
+                </div>
+              </div>
+              <div class="search-inline">
+                <input id="returnProductSearch" placeholder="Mahsulot qidirish...">
+              </div>
+              <div class="table-wrap">
+                <table id="returnEntryTable">
+                  <thead>
+                    <tr>
+                      <th>Mahsulot</th>
+                      <th>Qop narxi</th>
+                      <th>Dona narxi</th>
+                      <th>Qop soni</th>
+                      <th>Dona soni</th>
+                      <th>Summa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="returnEntryBody"></tbody>
+                </table>
+              </div>
+              <p id="returnEntryTotal" class="inline-text">Jami summa: 0 so'm</p>
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">Vozvratni saqlash</button>
+                <button class="btn btn-soft clear-entry-btn" data-entry-type="return" type="button">Qatorlarni tozalash</button>
+              </div>
+              <p id="returnNotice" class="notice"></p>
+            </form>
+          </article>
+        </section>
+
+        <section id="returnsHistorySection" class="section">
+          <div class="section-head">
+            <h2>Vozvratlar Tarixi</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="returnsTable" data-file="vozvratlar">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="returnsTable" type="button">Tanlanganlarni o'chirish</button>
+            </div>
+          </div>
+          <article class="card">
+            <h3>Vozvratlar ro'yxati</h3>
+            <div class="table-wrap">
+              <table id="returnsTable">
+                <thead>
+                  <tr>
+                    <th><input class="export-row-check select-all-check" data-select-all type="checkbox" aria-label="Barcha qatorlarni tanlash"></th>
+                    <th>Sana</th>
+                    <th>Holat</th>
+                    <th>Haydovchi</th>
+                    <th>Summa</th>
+                    <th>Izoh</th>
+                    <th>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody id="returnsBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="otherOutSection" class="section">
+          <div class="section-head">
+            <h2>Boshqa Chiqimlar</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="otherOutTable" data-file="boshqa-chiqimlar">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="otherOutTable" type="button">Tanlanganlarni o'chirish</button>
+            </div>
+          </div>
+
+          <article class="card">
+            <h3>Boshqa chiqim kiritish</h3>
+            <p class="inline-text">Obrazets, Brak yoki Abbos sababi bilan kiritilgan tovarlar sklad ostatkasidan ayiriladi.</p>
+            <form id="otherOutForm">
+              <div class="forms-grid">
+                <div class="field">
+                  <label for="otherOutDate">Sana</label>
+                  <input id="otherOutDate" type="date">
+                </div>
+                <div class="field">
+                  <label for="otherOutReason">Chiqim sababi</label>
+                  <select id="otherOutReason">
+                    <option value="Obrazets">Obrazets</option>
+                    <option value="Brak">Brak</option>
+                    <option value="Abbos">Abbos</option>
+                  </select>
+                </div>
+              </div>
+              <div class="search-inline">
+                <input id="otherOutProductSearch" placeholder="Mahsulot qidirish...">
+              </div>
+              <div class="table-wrap">
+                <table id="otherOutEntryTable">
+                  <thead>
+                    <tr>
+                      <th>Mahsulot</th>
+                      <th>Qop narxi</th>
+                      <th>Dona narxi</th>
+                      <th>Qop soni</th>
+                      <th>Dona soni</th>
+                      <th>Summa</th>
+                    </tr>
+                  </thead>
+                  <tbody id="otherOutEntryBody"></tbody>
+                </table>
+              </div>
+              <p id="otherOutEntryTotal" class="inline-text">Jami summa: 0 so'm</p>
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">Boshqa chiqimni saqlash</button>
+                <button class="btn btn-soft clear-entry-btn" data-entry-type="otherOut" type="button">Qatorlarni tozalash</button>
+              </div>
+              <p id="otherOutNotice" class="notice"></p>
+            </form>
+          </article>
+
+          <article class="card" style="margin-top:12px;">
+            <h3>Boshqa chiqimlar ro'yxati</h3>
+            <div class="table-wrap">
+              <table id="otherOutTable">
+                <thead>
+                  <tr>
+                    <th><input class="export-row-check select-all-check" data-select-all type="checkbox" aria-label="Barcha qatorlarni tanlash"></th>
+                    <th>Sana</th>
+                    <th>Holat</th>
+                    <th>Sabab</th>
+                    <th>Summa</th>
+                    <th>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody id="otherOutBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="dailyFlowSection" class="section">
+          <div class="section-head">
+            <h2>Jami Kunlik Chiqim</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="dailyFlowTable" data-file="jami-kunlik-chiqim">Excelga eksport</button>
+              <button class="btn btn-danger delete-selected-btn" data-table="dailyFlowTable" type="button">Tanlanganlarni o'chirish</button>
+            </div>
+          </div>
+          <article class="card" style="margin-bottom:12px;">
+            <div class="chip-row">
+              <button class="chip active" data-flow-type="all" type="button">Barchasi</button>
+              <button class="chip" data-flow-type="out" type="button">Faqat Chiqim</button>
+              <button class="chip" data-flow-type="in" type="button">Faqat Kirim</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <p class="inline-text" id="flowRangeText">Oraliq: Bugun</p>
+            <div class="table-wrap">
+              <table id="dailyFlowTable">
+                <thead>
+                  <tr>
+                    <th><input class="export-row-check select-all-check" data-select-all type="checkbox" aria-label="Barcha qatorlarni tanlash"></th>
+                    <th>Sana</th>
+                    <th>Holat</th>
+                    <th>Haydovchi/Sabab</th>
+                    <th>Summa</th>
+                    <th>Manba</th>
+                    <th>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody id="dailyFlowBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="reportsSection" class="section">
+          <div class="section-head">
+            <h2>Hisobotlar</h2>
+            <div class="actions">
+              <button class="btn btn-outline export-btn" data-table="reportsTable" data-file="hisobot">Excelga eksport</button>
+            </div>
+          </div>
+
+          <article class="card">
+            <p class="inline-text" id="reportRangeText">Hisobot davri: Oxirgi 7 kun</p>
+            <p class="inline-text" id="reportStockAsOfText">Ostatka: bugungi sana bo'yicha</p>
+            <div class="grid kpi-grid" style="margin-bottom:10px;">
+              <div class="card kpi">
+                <h3>Jami kirim</h3>
+                <strong id="reportIncomingQty">0 qop 0 dona</strong>
+                <span id="reportIncomingAmount">0 so'm</span>
+              </div>
+              <div class="card kpi">
+                <h3>Jami chiqim</h3>
+                <strong id="reportOutQty">0 qop 0 dona</strong>
+                <span id="reportOutAmount">0 so'm</span>
+              </div>
+              <div class="card kpi">
+                <h3>Jami vozvrat</h3>
+                <strong id="reportReturnQty">0 qop 0 dona</strong>
+                <span id="reportReturnAmount">0 so'm</span>
+              </div>
+              <div class="card kpi">
+                <h3>Sof chiqim</h3>
+                <strong id="reportNetAmount">0 so'm</strong>
+                <span>Chiqim - Vozvrat</span>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table id="reportsTable">
+                <thead>
+                  <tr>
+                    <th>Mahsulot</th>
+                    <th>Kirim</th>
+                    <th>Jami chiqim</th>
+                    <th>Vozvrat</th>
+                    <th>Joriy qoldiq</th>
+                  </tr>
+                </thead>
+                <tbody id="reportsBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section id="initialStockSection" class="section">
+          <div class="section-head">
+            <h2>Boshlang'ich Ostatka</h2>
+          </div>
+          <article class="card">
+            <h3>Sklad uchun boshlang'ich son kiritish</h3>
+            <p class="inline-text">Bu yerda faqat mahsulotning boshlang'ich soni (dona) kiritiladi.</p>
+            <form id="initialStockForm">
+              <div class="search-inline">
+                <input id="initialStockSearch" placeholder="Mahsulot qidirish...">
+              </div>
+              <div class="table-wrap">
+                <table id="initialStockTable">
+                  <thead>
+                    <tr>
+                      <th>Mahsulot</th>
+                      <th>Boshlang'ich soni (dona)</th>
+                      <th>Ko'rinishi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="initialStockBody"></tbody>
+                </table>
+              </div>
+              <p id="initialStockTotal" class="inline-text">Jami boshlang'ich ostatka: 0 dona</p>
+              <div class="actions">
+                <button class="btn btn-primary" type="submit">Boshlang'ich ostatkani saqlash</button>
+                <button id="clearInitialStockBtn" class="btn btn-danger" type="button">Barchasini tozalash</button>
+              </div>
+              <p id="initialStockNotice" class="notice"></p>
+            </form>
+          </article>
+        </section>
+
+        <section id="profileSection" class="section">
+          <div class="section-head">
+            <h2>Profil</h2>
+          </div>
+          <article class="card">
+            <div class="admin-panel">
+              <div class="admin-head">
+                <div id="adminAvatar" class="avatar avatar-lg"></div>
+                <div>
+                  <label for="adminPhoto" class="btn btn-soft" style="display:inline-block;">Admin rasmi</label>
+                  <input id="adminPhoto" type="file" accept="image/*" class="hidden">
+                  <p class="upload-hint">Rasm Telegramdagidek dumaloq ko'rinadi.</p>
+                </div>
+              </div>
+              <div class="forms-grid">
+                <div class="field">
+                  <label for="adminName">Ism</label>
+                  <input id="adminName" value="Umid">
+                </div>
+                <div class="field">
+                  <label for="adminRoleInput">Rol</label>
+                  <input id="adminRoleInput" value="Sklad Admin">
+                </div>
+                <div class="field">
+                  <label for="adminEmail">Email</label>
+                  <input id="adminEmail" type="email" value="admin@example.com">
+                </div>
+                <div class="field">
+                  <label for="adminStatus">Status</label>
+                  <input id="adminStatus" value="Faol">
+                </div>
+                <div class="field">
+                  <label for="adminLogin">Login</label>
+                  <input id="adminLogin" value="Umid" readonly>
+                </div>
+                <div class="field">
+                  <label for="adminPassword">Parol</label>
+                  <input id="adminPassword" type="password" value="" placeholder="Serverda himoyalangan" readonly>
+                </div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="movementEditModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Yozuvni tahrirlash</h3>
+        <button id="movementEditCloseBtn" class="btn btn-outline btn-sm" type="button">Yopish</button>
+      </div>
+      <form id="movementEditForm">
+        <input id="movementEditId" type="hidden">
+        <div class="modal-grid">
+          <div class="field">
+            <label for="movementEditType">Tur</label>
+            <input id="movementEditType" readonly>
+          </div>
+          <div class="field">
+            <label for="movementEditDate">Sana</label>
+            <input id="movementEditDate" type="date" required>
+          </div>
+          <div class="field">
+            <label for="movementEditProduct">Mahsulot</label>
+            <select id="movementEditProduct"></select>
+          </div>
+          <div class="field">
+            <label for="movementEditUnit">Birlik</label>
+            <select id="movementEditUnit">
+              <option value="bag">Qop</option>
+              <option value="piece">Dona</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="movementEditQty">Miqdor</label>
+            <input id="movementEditQty" type="number" min="1" step="1" required>
+          </div>
+          <div class="field">
+            <label for="movementEditAmount">Summa</label>
+            <input id="movementEditAmount" type="number" min="0" step="1" required>
+          </div>
+          <div id="movementEditDriverWrap" class="field full">
+            <label for="movementEditDriver">Haydovchi</label>
+            <select id="movementEditDriver"></select>
+          </div>
+          <div class="field full">
+            <label for="movementEditNote">Izoh</label>
+            <input id="movementEditNote" placeholder="Ixtiyoriy">
+          </div>
+        </div>
+        <div id="movementEditGroupWrap" class="table-wrap hidden" style="margin-top:10px;">
+          <table id="movementEditGroupTable">
+            <thead>
+              <tr>
+                <th>Mahsulot</th>
+                <th>Birlik</th>
+                <th>Miqdor</th>
+                <th>Summa</th>
+              </tr>
+            </thead>
+            <tbody id="movementEditGroupBody"></tbody>
+          </table>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Saqlash</button>
+          <button id="movementEditCancelBtn" class="btn btn-soft" type="button">Bekor qilish</button>
+        </div>
+        <p id="movementEditNotice" class="notice"></p>
+      </form>
+    </div>
+  </div>
+
+  <div id="driverEditModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Haydovchi profilini tahrirlash</h3>
+        <button id="driverEditCloseBtn" class="btn btn-outline btn-sm" type="button">Yopish</button>
+      </div>
+      <form id="driverEditForm">
+        <input id="driverEditId" type="hidden">
+        <div class="admin-head" style="margin-bottom:10px;">
+          <div id="driverEditAvatar" class="avatar avatar-lg"></div>
+          <div class="avatar-actions">
+            <label for="driverEditPhoto" class="btn btn-soft">Rasm tanlash</label>
+            <input id="driverEditPhoto" type="file" accept="image/*" class="hidden">
+            <button id="driverEditPhotoRemoveBtn" class="btn btn-danger" type="button">Rasmni o'chirish</button>
+          </div>
+        </div>
+        <div class="modal-grid">
+          <div class="field">
+            <label for="driverEditName">F.I.O</label>
+            <input id="driverEditName" required>
+          </div>
+          <div class="field">
+            <label for="driverEditPhone">Telefon</label>
+            <input id="driverEditPhone">
+          </div>
+          <div class="field full">
+            <label for="driverEditVehicle">Transport</label>
+            <input id="driverEditVehicle">
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">Saqlash</button>
+          <button id="driverEditCancelBtn" class="btn btn-soft" type="button">Bekor qilish</button>
+        </div>
+        <p id="driverEditNotice" class="notice"></p>
+      </form>
+    </div>
+  </div>
+  <script src="assets/app.js"></script>
+</body>
+</html>
+
