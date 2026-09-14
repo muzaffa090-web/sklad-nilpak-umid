@@ -1,0 +1,12 @@
+{
+  "name": "sklad-doctor-netlify",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/core-calculations.test.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "latest"
+  }
+}
